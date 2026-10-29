@@ -16,6 +16,13 @@ cafeSim(웹 three.js 커피머신 시뮬레이터, 내 포크 subinlu22/cafesim)
 - 재질 연결: 유니티 렌더러 이름 Node-N = glb 노드 → glb 재질 번호, 웹은 GLTFExporter 순서로 같은 번호를 찾음
 - 웹 포스트 효과는 three.js(GTAO·UnrealBloom·색 보정) 버전이라 유니티와 조금 다름, DOF 없음
 
+### 실시간 연동 (메뉴 RenderTemplate > Live Link to Web, 체크로 켜고 끔)
+- 켜 두면 프리셋·포스트·재질 등 RenderTemplate 에셋을 고칠 때마다 0.5초 뒤 자동으로 내보냄 (바뀐 것만)
+- Look Panel에서 프리셋을 고르면 웹 시뮬레이터도 같은 프리셋으로 바뀜 (live.json)
+- 웹은 개발 모드(`npm run dev`) 또는 주소에 `?live=1`일 때 1초마다 확인해서 1~2초 안에 반영 ("유니티에서 … 반영" 표시)
+- 유니티와 웹 시뮬레이터를 같은 PC에서 둘 다 켜 두면 됨. 서버 추가 없이 파일로 주고받음
+- 다 만든 뒤 배포용으로는 메뉴 Export Looks to Web(정리 후 전체 내보내기) 한 번
+
 ## Reference Matcher: 레퍼런스 사진으로 프리셋 만들기 (메뉴 RenderTemplate > Reference Matcher)
 1. "새 설정 만들기" → 레퍼런스 사진(png/jpg, Assets 안), 프리셋 이름, 시작 프리셋(조명·카메라) 지정
 2. 부위(벽·바닥·상판·하부장·커피머신·제빙기·컵 디스펜서)마다 "영역 지정"을 누르고 사진 위를 드래그, 재질 종류 선택

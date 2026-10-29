@@ -16,7 +16,7 @@ public static class WebLookExporter
     const string Root = "Assets/RenderTemplate";
     const string ModelPath = Root + "/Models/cafesim_a100.glb";
     const string PrefKey = "RenderTemplate.WebLooksDir";
-    static string OutDir => EditorPrefs.GetString(PrefKey, "E:/cam_p/UnityMCP_CoffeeMachine/packages/viewer/public/looks");
+    public static string OutDir => EditorPrefs.GetString(PrefKey, "E:/cam_p/UnityMCP_CoffeeMachine/packages/viewer/public/looks");
 
     [MenuItem("RenderTemplate/Export Looks to Web")]
     public static void ExportMenu()
@@ -27,17 +27,20 @@ public static class WebLookExporter
         Debug.Log("[WebLookExporter] " + Export(dir));
     }
 
-    public static string Export(string outDir = null)
+    // clean=true: 지난번 파일을 지우고 새로 (메뉴), false: 바뀐 것만 덮어씀 (Live Link)
+    public static string Export(string outDir = null, bool clean = true)
     {
         outDir = outDir ?? OutDir;
         var sw = Object.FindFirstObjectByType<LookSwitcher>();
         if (!sw) return "씬에 LookSwitcher 없음";
-        int keep = sw.Index; sw.Select(-1); sw.SetHq(false); sw.ResetModelMaterials();
 
-        var gltfIndex = MaterialIndexMap(sw.model);
+        var gltfIndex = MaterialIndexMap();                                    // glb 파일 기준이라 씬 상태와 무관 (화면 안 깜빡임)
         Directory.CreateDirectory(outDir);
-        foreach (var old in Directory.GetFiles(outDir, "*.json")) File.Delete(old);             // 지난번 내보낸 것 정리 (지운 프리셋·안 쓰는 텍스처가 남지 않게)
-        if (Directory.Exists(Path.Combine(outDir, "tex"))) Directory.Delete(Path.Combine(outDir, "tex"), true);
+        if (clean)
+        {
+            foreach (var old in Directory.GetFiles(outDir, "*.json")) File.Delete(old);         // 지운 프리셋·안 쓰는 텍스처가 남지 않게
+            if (Directory.Exists(Path.Combine(outDir, "tex"))) Directory.Delete(Path.Combine(outDir, "tex"), true);
+        }
         Directory.CreateDirectory(Path.Combine(outDir, "tex"));
         Directory.CreateDirectory(Path.Combine(outDir, "env"));
         var index = new List<string>();
@@ -120,8 +123,16 @@ public static class WebLookExporter
             index.Add(new Json().Str("id", id).Str("name", p.displayName).Str("file", id + ".json").ToString());
         }
         File.WriteAllText(Path.Combine(outDir, "index.json"), "[" + string.Join(",", index) + "]", new UTF8Encoding(false));
-        sw.Select(keep);
+        WriteLive(outDir, sw);
         return $"{index.Count}개 룩을 내보냄 → {outDir}";
+    }
+
+    // live.json: 유니티에서 지금 고른 룩 + 바뀐 시각 → 웹이 1초마다 보고 따라감
+    public static void WriteLive(string outDir, LookSwitcher sw)
+    {
+        string id = sw && sw.Current ? sw.Current.name : "";
+        File.WriteAllText(Path.Combine(outDir, "live.json"),
+            new Json().Str("id", id).Str("stamp", System.DateTime.Now.Ticks.ToString()).ToString(), new UTF8Encoding(false));
     }
 
     // 유니티 재질 → glb 재질 번호
@@ -130,13 +141,14 @@ public static class WebLookExporter
     [System.Serializable] class GMesh { public GPrim[] primitives; }
     [System.Serializable] class GRoot { public GNode[] nodes; public GMesh[] meshes; }
 
-    static Dictionary<Material, int> MaterialIndexMap(Transform model)
+    static Dictionary<Material, int> MaterialIndexMap()
     {
         var bytes = File.ReadAllBytes(ModelPath);
         int len = System.BitConverter.ToInt32(bytes, 12);
         var g = JsonUtility.FromJson<GRoot>(Encoding.UTF8.GetString(bytes, 20, len));
         var map = new Dictionary<Material, int>();
-        foreach (var r in model.GetComponentsInChildren<Renderer>(true))
+        var src = AssetDatabase.LoadAssetAtPath<GameObject>(ModelPath);          // glb 원본 (렌더러 이름 Node-N, 원본 재질)
+        foreach (var r in src.GetComponentsInChildren<Renderer>(true))
         {
             if (!r.name.StartsWith("Node-") || !int.TryParse(r.name.Substring(5), out int n)) continue;
             int mi = g.nodes[n].mesh; if (mi < 0) continue;
