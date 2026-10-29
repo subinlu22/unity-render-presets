@@ -1,0 +1,19 @@
+# Unity
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+*.csproj
+*.sln
+*.user
+.vs/
+.vscode/
+# 스크린샷 결과물
+/Screenshots/
+# 외부 원본 에셋 (Tools/fetch_polyhaven.py로 받기)
+/Assets/RenderTemplate/ThirdParty/
+/Assets/RenderTemplate/ThirdParty.meta
