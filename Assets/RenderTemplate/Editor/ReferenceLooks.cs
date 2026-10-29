@@ -57,7 +57,7 @@ public static class ReferenceLooks
 
         var ppA = Profile("PP_RefInstall", p =>
         {
-            var ao = p.AddSettings<AmbientOcclusion>(); ao.enabled.Override(true); ao.intensity.Override(0.9f);
+            var ao = p.AddSettings<AmbientOcclusion>(); ao.enabled.Override(true); ao.intensity.Override(0.5f); ao.thicknessModifier.Override(1f);
             ao.mode.Override(AmbientOcclusionMode.MultiScaleVolumetricObscurance);
             var cg = p.AddSettings<ColorGrading>(); cg.enabled.Override(true); cg.tonemapper.Override(Tonemapper.ACES);
             cg.postExposure.Override(0f); cg.contrast.Override(4f); cg.temperature.Override(2f); cg.saturation.Override(-4f);
@@ -93,7 +93,7 @@ public static class ReferenceLooks
 
         var ppB = Profile("PP_RefPremium", p =>
         {
-            var ao = p.AddSettings<AmbientOcclusion>(); ao.enabled.Override(true); ao.intensity.Override(1f);
+            var ao = p.AddSettings<AmbientOcclusion>(); ao.enabled.Override(true); ao.intensity.Override(0.55f); ao.thicknessModifier.Override(1f);
             ao.mode.Override(AmbientOcclusionMode.MultiScaleVolumetricObscurance);
             var cg = p.AddSettings<ColorGrading>(); cg.enabled.Override(true); cg.tonemapper.Override(Tonemapper.ACES);
             cg.postExposure.Override(0.75f); cg.contrast.Override(12f); cg.temperature.Override(8f); cg.saturation.Override(-4f);

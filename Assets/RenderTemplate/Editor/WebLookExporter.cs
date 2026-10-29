@@ -39,7 +39,9 @@ public static class WebLookExporter
         if (clean)
         {
             foreach (var old in Directory.GetFiles(outDir, "*.json")) File.Delete(old);         // 지운 프리셋·안 쓰는 텍스처가 남지 않게
-            if (Directory.Exists(Path.Combine(outDir, "tex"))) Directory.Delete(Path.Combine(outDir, "tex"), true);
+            // 폴더째 지우면 웹 개발 서버가 보고 있을 때 막힘 → 파일만 하나씩 (못 지우면 건너뜀, 어차피 덮어씀)
+            if (Directory.Exists(Path.Combine(outDir, "tex")))
+                foreach (var f in Directory.GetFiles(Path.Combine(outDir, "tex"))) { try { File.Delete(f); } catch { } }
         }
         Directory.CreateDirectory(Path.Combine(outDir, "tex"));
         Directory.CreateDirectory(Path.Combine(outDir, "env"));
@@ -86,7 +88,8 @@ public static class WebLookExporter
                     var mj = new Json().Num("index", gi).Arr("color", m.GetColor("baseColorFactor"))
                         .Num("metalness", m.GetFloat("metallicFactor")).Num("roughness", m.GetFloat("roughnessFactor"));
                     TexField(mj, "map", m, "baseColorTexture", outDir);
-                    if (m.IsKeywordEnabled("_NORMALMAP")) { TexField(mj, "normalMap", m, "normalTexture", outDir); mj.Num("normalScale", m.GetFloat("normalTexture_scale")); }
+                    if (m.IsKeywordEnabled("_NORMALMAP") && m.GetTexture("normalTexture")) { TexField(mj, "normalMap", m, "normalTexture", outDir); mj.Num("normalScale", m.GetFloat("normalTexture_scale")); }
+                    else mj.Raw("normalMap", "null");                                    // 노멀맵 없음 → 웹도 원래 노멀맵을 지움
                     if (m.HasProperty("emissiveFactor")) mj.Arr("emissive", m.GetColor("emissiveFactor"));
                     mats.Add(mj.ToString());
                 }
@@ -175,7 +178,7 @@ public static class WebLookExporter
     static void TexField(Json j, string key, Material m, string prop, string outDir)
     {
         var t = m.GetTexture(prop);
-        if (!t) return;
+        if (!t) { j.Raw(key, "null"); return; }                                         // 텍스처를 비웠음 → 웹도 원래 텍스처를 지움 (예: 나무 무늬 → 단색 페인트)
         string path = AssetDatabase.GetAssetPath(t);
         if (string.IsNullOrEmpty(path) || path.EndsWith(".glb")) return;
         j.Str(key, Copy(path, outDir, "tex"));

@@ -232,7 +232,8 @@ public class ReferenceMatcher : EditorWindow
             cg0.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector; AssetDatabase.AddObjectToAsset(cg0, pp);
         }
         cg0.enabled.Override(true);
-        if (pp.TryGetSettings(out AmbientOcclusion ao0)) { ao0.intensity.Override(Mathf.Max(ao0.intensity.value, 1.2f)); ao0.thicknessModifier.Override(1.5f); }
+        // AO는 장면이 작아서(기계 높이 약 0.8m) 세게 걸면 벽에 검은 번짐이 생김 → 약하게 고정
+        if (pp.TryGetSettings(out AmbientOcclusion ao0)) { ao0.intensity.Override(0.5f); ao0.thicknessModifier.Override(1f); }
         EditorUtility.SetDirty(pp);
 
         // 프리셋: 시작 프리셋 복제 → 재질 세트·포스트·레퍼런스 교체
