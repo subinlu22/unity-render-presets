@@ -73,6 +73,10 @@ public class ReferenceMatcher : EditorWindow
             {
                 s.surface = (S)EditorGUILayout.EnumPopup(s.surface, GUILayout.Width(100));
                 EditorGUILayout.ColorField(GUIContent.none, s.sampled, false, false, false, GUILayout.Width(40));
+                EditorGUIUtility.labelWidth = 34;
+                s.wear = EditorGUILayout.Slider("낡음", s.wear, 0, 1, GUILayout.Width(150));
+                s.stickers = EditorGUILayout.IntField(s.part == P.벽 ? "포스터" : "스티커", s.stickers, GUILayout.Width(80));
+                EditorGUIUtility.labelWidth = 0;
                 var old = GUI.backgroundColor; if (i == _active) GUI.backgroundColor = Color.yellow;
                 if (GUILayout.Button("영역 지정", GUILayout.Width(70))) _active = i == _active ? -1 : i;
                 GUI.backgroundColor = old;
@@ -178,6 +182,7 @@ public class ReferenceMatcher : EditorWindow
                 Color c = s.sampled;
                 if (System.Array.IndexOf(ReferenceLooks.Dividers, i) >= 0) c *= 0.7f;     // 하부장 칸막이는 조금 어둡게
                 ApplySurface(m, s.surface, c, $"{id}_{s.part}");
+                if (s.wear > 0.01f) Weathering.Apply(m, $"{id}_{s.part}_{i:00}", s.wear, peel: s.part == P.하부장 && s.surface == S.무광페인트, seed: i);
                 AssetDatabase.CreateAsset(m, path);
                 var pair = new MaterialSet.Pair { from = from, to = m };
                 if (k >= 0) pairs[k] = pair; else pairs.Add(pair);
@@ -227,6 +232,7 @@ public class ReferenceMatcher : EditorWindow
             cg0.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector; AssetDatabase.AddObjectToAsset(cg0, pp);
         }
         cg0.enabled.Override(true);
+        if (pp.TryGetSettings(out AmbientOcclusion ao0)) { ao0.intensity.Override(Mathf.Max(ao0.intensity.value, 1.2f)); ao0.thicknessModifier.Override(1.5f); }
         EditorUtility.SetDirty(pp);
 
         // 프리셋: 시작 프리셋 복제 → 재질 세트·포스트·레퍼런스 교체
@@ -235,7 +241,7 @@ public class ReferenceMatcher : EditorWindow
         var look = Instantiate(basePreset);
         AssetDatabase.DeleteAsset(lookPath); AssetDatabase.CreateAsset(look, lookPath);
         look.displayName = setup.presetName; look.order = 50; look.materialSet = set; look.post = pp; look.reference = setup.reference;
-        look.hqMaterials = true;
+        look.hqMaterials = true; look.contactShadow = 0.65f;
         look.note = "Reference Matcher로 생성: 영역 색 추출 + 재질 종류 + 톤 자동 보정";
 
         // ③ 벽 영역의 왼쪽/오른쪽 밝기 차이 → 주 조명(첫 번째 Directional)을 밝은 쪽으로
@@ -257,6 +263,10 @@ public class ReferenceMatcher : EditorWindow
                     break;
                 }
         }
+        EditorUtility.SetDirty(look); EditorUtility.SetDirty(set); EditorUtility.SetDirty(pp);
+        AssetDatabase.SaveAssets();                                         // 스티커 세트가 에셋을 다시 읽기 전에 먼저 저장 (안 하면 변경이 날아감)
+        var dressing = Dressing.Build(setup, id);
+        look.roomPrefab = dressing;
         EditorUtility.SetDirty(look);
         setup.output = AssetDatabase.LoadAssetAtPath<LookPreset>(lookPath);
         EditorUtility.SetDirty(setup);
@@ -386,13 +396,17 @@ public class ReferenceMatcher : EditorWindow
         var sw = FindFirstObjectByType<LookSwitcher>();
         if (!sw || !setup.output) { _status = "씬에 LookSwitcher가 없거나 프리셋이 아직 없음"; return; }
         sw.LoadPresets();
-        int idx = sw.presets.IndexOf(setup.output);
+        string outPath = AssetDatabase.GetAssetPath(setup.output);
+        int idx = sw.presets.FindIndex(p => p && AssetDatabase.GetAssetPath(p) == outPath);   // 같은 순서 번호가 여럿이어도 파일로 정확히 찾음
         if (idx < 0) { _status = "프리셋이 Resources/Looks 안에 없음"; return; }
+        // 안전장치: 이 설정이 만든 전용 포스트 파일(PP_Ref_*)만 고침. 다른 프리셋(화이트 라운지 등) 값은 절대 안 건드림
+        if (!setup.output.post || !setup.output.post.name.StartsWith("PP_Ref_")) { _status = "전용 포스트 파일이 아님 → 톤 맞추기 중단 (프리셋 만들기를 먼저)"; Debug.LogWarning("[ReferenceMatcher] " + _status); return; }
         var refPx = Pixels(setup.reference, out _, out _);
         var target = Measure(refPx);
         var pp = setup.output.post;
         pp.TryGetSettings(out ColorGrading cg);
         foreach (var p in new ParameterOverride[] { cg.postExposure, cg.temperature, cg.contrast, cg.saturation }) p.overrideState = true;
+        float exp0 = cg.postExposure.value, con0 = cg.contrast.value, sat0 = cg.saturation.value, tmp0 = cg.temperature.value;     // 시작 프리셋 값 (이 근처에서만 움직임)
 
         string log = (setup.log ?? "").Split('\n')[0] + "\n레퍼런스: " + Fmt(target) + "\n";
         int iter = 0, wait = 0; float firstErr = -1;
@@ -400,6 +414,7 @@ public class ReferenceMatcher : EditorWindow
         sw.Select(idx); DynamicGI.UpdateEnvironment();
         tick = () =>
         {
+            if (sw.Index != idx) { sw.Select(idx); wait = 0; return; }          // 다른 프리셋이 떠 있으면 다시 고르고 기다림
             if (++wait < 25) return;
             wait = 0;
             var now = Measure(RenderSmall(sw.cam));
@@ -417,10 +432,11 @@ public class ReferenceMatcher : EditorWindow
                 return;
             }
             // 화면 밝기는 감마 공간이라 노출(EV)로 바꿀 때 약 2.2배, 한 번에 너무 크게 안 움직이게 줄여서 반영
-            cg.postExposure.value = Mathf.Clamp(cg.postExposure.value + Mathf.Clamp(Mathf.Log(target.lum / Mathf.Max(now.lum, 0.01f), 2) * 1.4f, -0.8f, 0.8f), -2f, 2f);
-            cg.temperature.value = Mathf.Clamp(cg.temperature.value + Mathf.Clamp((target.warm - now.warm) * 120f, -8f, 8f), -40f, 40f);
-            cg.contrast.value = Mathf.Clamp(cg.contrast.value + Mathf.Clamp((target.contrast / Mathf.Max(now.contrast, 0.01f) - 1f) * 50f, -10f, 10f), -30f, 30f);
-            cg.saturation.value = Mathf.Clamp(cg.saturation.value + Mathf.Clamp((target.sat / Mathf.Max(now.sat, 0.01f) - 1f) * 30f, -8f, 8f), -40f, 40f);
+            // 밝기·대비는 조금만 (시작 프리셋의 조명 톤을 지켜야 실사처럼 그림자가 남음), 색온도·채도는 사진 쪽으로
+            cg.postExposure.value = Mathf.Clamp(cg.postExposure.value + Mathf.Clamp(Mathf.Log(target.lum / Mathf.Max(now.lum, 0.01f), 2) * 0.8f, -0.25f, 0.25f), exp0 - 0.5f, exp0 + 0.5f);
+            cg.temperature.value = Mathf.Clamp(cg.temperature.value + Mathf.Clamp((target.warm - now.warm) * 80f, -5f, 5f), tmp0 - 10f, tmp0 + 10f);
+            cg.contrast.value = Mathf.Clamp(cg.contrast.value + Mathf.Clamp((target.contrast / Mathf.Max(now.contrast, 0.01f) - 1f) * 30f, -4f, 4f), con0 - 8f, con0 + 8f);
+            cg.saturation.value = Mathf.Clamp(cg.saturation.value + Mathf.Clamp((target.sat / Mathf.Max(now.sat, 0.01f) - 1f) * 20f, -5f, 5f), sat0 - 12f, sat0 + 12f);
             EditorUtility.SetDirty(pp);
             iter++;
             _status = $"톤 맞추는 중… {iter}/{iterations}";

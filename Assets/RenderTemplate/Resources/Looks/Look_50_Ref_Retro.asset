@@ -66,7 +66,8 @@ MonoBehaviour:
   probeSize: {x: 4, y: 2.5, z: 3}
   probeIntensity: 1
   post: {fileID: 11400000, guid: e5c1ce1f21764094ba4166162fb1b317, type: 2}
-  roomPrefab: {fileID: 0}
+  contactShadow: 0.65
+  roomPrefab: {fileID: 5325065534439410798, guid: f7961fcce5caf1246833bfbb11f56b69, type: 3}
   hqMaterials: 1
   materialSet: {fileID: 11400000, guid: 080df9f89020b9f42856b5b57596b574, type: 2}
   overrideCamera: 1

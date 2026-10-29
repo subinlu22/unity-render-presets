@@ -22,6 +22,8 @@ public class ReferenceSetup : ScriptableObject
         public Surface surface;
         public Rect rect;                        // 사진 기준 0~1 (왼쪽 위가 0,0)
         public Color sampled = Color.gray;       // 영역에서 뽑은 색 (자동)
+        [Range(0, 1)] public float wear;          // 낡음: 때·얼룩·흘러내린 자국 (하부장 페인트면 벗겨짐)
+        public int stickers;                      // 붙일 스티커 수 (벽은 포스터 수)
         public Slot(Part p, Surface s) { part = p; surface = s; use = false; }
     }
 

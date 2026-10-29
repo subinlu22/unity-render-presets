@@ -58,6 +58,7 @@ MonoBehaviour:
   probeSize: {x: 4, y: 2.5, z: 3}
   probeIntensity: 1
   post: {fileID: 11400000, guid: 1f5811f04a19bc146a2acf6a2ae8986b, type: 2}
+  contactShadow: 0.6
   roomPrefab: {fileID: 0}
   hqMaterials: 1
   materialSet: {fileID: 11400000, guid: 85494cb2d7946bd4c80688b674436c82, type: 2}

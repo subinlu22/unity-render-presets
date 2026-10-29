@@ -123,6 +123,7 @@ public class LookSwitcher : MonoBehaviour
             room.name = p.roomPrefab.name;
             foreach (var t in room.GetComponentsInChildren<Transform>(true)) t.gameObject.hideFlags = HideFlags.DontSave;
         }
+        if (p.contactShadow > 0) ContactShadows.Build(model, _rig.transform, p.contactShadow);
         if (p.lights != null)
             foreach (var r in p.lights)
             {

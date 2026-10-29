@@ -52,6 +52,9 @@ public class LookPreset : ScriptableObject
     [Header("포스트 프로세싱 (AO·비네트·Bloom·DOF·톤매핑)")]
     public PostProcessProfile post;
 
+    [Header("접지 그림자 (물건이 떠 보이지 않게, 0 = 끔)")]
+    [Range(0, 1)] public float contactShadow = 0.6f;
+
     [Header("세트: 이 프리셋에서만 보일 배경 (벽·바닥 등 프리팹)")]
     public GameObject roomPrefab;
 

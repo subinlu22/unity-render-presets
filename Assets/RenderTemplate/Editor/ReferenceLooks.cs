@@ -124,7 +124,7 @@ public static class ReferenceLooks
         l.skybox = sky; l.showSkybox = true; l.ambientIntensity = ambient; l.reflectionIntensity = 1f;
         l.originalLightScale = 0; l.lights = lights; l.post = pp; l.roomPrefab = null;
         l.reflectionProbe = true; l.probeSize = new Vector3(4, 2.5f, 3); l.probeIntensity = 1f;
-        l.hqMaterials = true; l.materialSet = set;
+        l.hqMaterials = true; l.materialSet = set; l.contactShadow = 0.6f;
         l.overrideCamera = true; l.cameraOffset = CamWorld - Focus; l.lookOffset = LookWorld - Focus; l.fov = 38f;
         l.reference = AssetDatabase.LoadAssetAtPath<Texture2D>(Root + "/References/" + refName + ".png");
         EditorUtility.SetDirty(l);
