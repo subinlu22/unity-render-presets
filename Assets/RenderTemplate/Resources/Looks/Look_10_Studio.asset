@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LookPreset
   displayName: "\uC2A4\uD29C\uB514\uC624"
   order: 10
+  note: 
   skybox: {fileID: 2100000, guid: a8f05715cb5fb5c47a8abcc1da0da481, type: 2}
   ambientIntensity: 0.55
   reflectionIntensity: 1
@@ -55,3 +56,11 @@ MonoBehaviour:
   probeSize: {x: 3, y: 2, z: 2}
   probeIntensity: 1
   post: {fileID: 11400000, guid: 13f950f4601711a4ab65187d4904a174, type: 2}
+  roomPrefab: {fileID: 0}
+  hqMaterials: 0
+  materialSet: {fileID: 0}
+  overrideCamera: 0
+  cameraOffset: {x: 0, y: 0.3, z: 2}
+  lookOffset: {x: 0, y: 0, z: 0}
+  fov: 40
+  reference: {fileID: 0}

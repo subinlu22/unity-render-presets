@@ -6,7 +6,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.PostProcessing;
 
 // 메뉴 RenderTemplate > Build Demo Scene
-// 하는 일: ① HDRI 스카이 재질·포스트 프로필·프리셋(스튜디오, 카페 무드) 만들기
+// 하는 일: ① HDRI 스카이 재질·포스트 프로필·프리셋(스튜디오, 실사 카페, 화이트·다크 라운지) 만들기
 //         ② 데모 씬 만들기: 커피머신 모델(glb) + 웹과 같은 원래 조명·카메라 + 템플릿 오브젝트
 //         ③ 원본/프리셋별 미리보기 이미지 저장 (Screenshots/preview_*.png)
 // 좌표: 웹(three.js)에서 가져온 값은 x 부호만 바꿈 (glTF 불러올 때 같은 방식으로 뒤집힘)
@@ -30,7 +30,6 @@ public static class RenderTemplateBuilder
         AssetDatabase.Refresh();
 
         var studioSky = Sky("Sky_Studio", HdriDir + "/studio_small_09_1k.hdr");
-        var cafeSky = Sky("Sky_Cafe", HdriDir + "/brown_photostudio_02_1k.hdr");
         float focusDist = Vector3.Distance(CamPos, Target);
 
         // ---------- 원본용 포스트: 웹과 같은 ACES 톤매핑만
@@ -62,43 +61,26 @@ public static class RenderTemplateBuilder
             };
         });
 
-        // ---------- 카페 무드: 따뜻하고 어둡게, 발광체만 은은한 Bloom, 머신에 초점
-        var cafePP = Profile("PP_CafeMood", p =>
-        {
-            var ao = p.AddSettings<AmbientOcclusion>(); ao.enabled.Override(true);
-            ao.mode.Override(AmbientOcclusionMode.MultiScaleVolumetricObscurance); ao.intensity.Override(1f);
-            var cg = p.AddSettings<ColorGrading>(); cg.enabled.Override(true);
-            cg.tonemapper.Override(Tonemapper.ACES); cg.postExposure.Override(-0.1f);
-            cg.temperature.Override(15f); cg.saturation.Override(-5f);
-            var vg = p.AddSettings<Vignette>(); vg.enabled.Override(true);
-            vg.intensity.Override(0.4f); vg.smoothness.Override(0.45f);
-            var bl = p.AddSettings<Bloom>(); bl.enabled.Override(true);
-            bl.threshold.Override(1.1f); bl.intensity.Override(2.5f); bl.softKnee.Override(0.5f);
-            var dof = p.AddSettings<DepthOfField>(); dof.enabled.Override(true);
-            dof.focusDistance.Override(focusDist); dof.aperture.Override(2.8f); dof.focalLength.Override(50f);
-            dof.kernelSize.Override(KernelSize.Medium);
-        });
-        Look("Look_20_CafeMood", "카페 무드", 20, cafeSky, cafePP, l =>
-        {
-            l.ambientIntensity = 0.25f; l.reflectionIntensity = 0.7f;
-            l.backgroundColor = new Color(0.05f, 0.035f, 0.025f);
-            l.fog = true; l.fogColor = l.backgroundColor; l.fogDensity = 0.12f;
-            l.lights = new[]
-            {
-                new LookPreset.RigLight { name = "Pendant (따뜻)", type = LightType.Spot, color = new Color(1f, 0.72f, 0.45f),
-                    intensity = 6f, position = new Vector3(0.8f, 1.6f, 1.2f), euler = Aim(new Vector3(0.8f, 1.6f, 1.2f)),
-                    range = 5f, spotAngle = 60f, shadows = true },
-                Dir("Rim (따뜻)", new Color(1f, 0.85f, 0.7f), 0.6f, new Vector3(-0.8f, 1.5f, -2.5f), false),
-            };
-        });
+        // ---------- 실사 카페: 고퀄 재질 세트 + 룸 세트 + 실내 HDRI
+        var hq = RealisticBuilder.BuildMaterialSet(ModelPath);
+        var tmp = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(ModelPath));
+        var b = new Bounds(tmp.transform.position, Vector3.zero);
+        foreach (var r in tmp.GetComponentsInChildren<Renderer>()) b.Encapsulate(r.bounds);
+        Object.DestroyImmediate(tmp);
+        var room = RealisticBuilder.BuildRoom(b);
+        RealisticBuilder.BuildPreset(Sky("Sky_RealCafe", HdriDir + "/cayley_interior_2k.hdr"),
+                                     RealisticBuilder.BuildPost(PresetDir, focusDist), room);
         AssetDatabase.SaveAssets();
 
-        BuildScene(basePP);
+        // ---------- 레퍼런스 사진에 맞춘 프리셋 (실제 설치 / 프리미엄)
+        ReferenceLooks.Build(ModelPath, focusDist);
+
+        BuildScene(basePP, hq);
         Debug.Log("[RenderTemplate] 데모 씬 완료: " + ScenePath);
     }
 
     // ================================================================ 씬
-    static void BuildScene(PostProcessProfile basePP)
+    static void BuildScene(PostProcessProfile basePP, MaterialSet hq)
     {
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
@@ -155,9 +137,14 @@ public static class RenderTemplateBuilder
         var focus = new GameObject("Focus (머신 중심)").transform;
         focus.SetParent(tpl.transform); focus.position = Target;
         var sw = tpl.AddComponent<LookSwitcher>();
-        sw.cam = cam; sw.focus = focus; sw.LoadPresets();
+        sw.cam = cam; sw.focus = focus; sw.model = model.transform;
+        sw.hqSet = AssetDatabase.LoadAssetAtPath<MaterialSet>(Root + "/Presets/MaterialSet_HQ.asset");
+        Debug.Log("[RenderTemplate] hqSet " + (sw.hqSet ? "연결됨" : "없음") + " / hq 인자 " + (hq ? "있음" : "null"));
+        sw.LoadPresets();
         var shot = tpl.AddComponent<ScreenshotTool>();
         shot.cam = cam; shot.looks = sw;
+        var panel = tpl.AddComponent<LookPanel>();
+        panel.looks = sw; panel.shots = shot;
 
         EditorSceneManager.SaveScene(scene, ScenePath);
         EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
@@ -165,12 +152,39 @@ public static class RenderTemplateBuilder
         // 미리보기 (원본 + 프리셋마다 한 장)
         string dir = Path.Combine(Application.dataPath, "..", "Screenshots");
         probe.RenderProbe();
-        for (int i = -1; i < sw.presets.Count; i++)
+        if (Application.isBatchMode)
         {
-            sw.Select(i);
-            ScreenshotTool.Render(cam, 1280, 720, dir, $"preview_{i + 1}_{sw.CurrentName}.png");
+            for (int i = -1; i < sw.presets.Count; i++)
+            {
+                sw.Select(i);
+                ScreenshotTool.Render(cam, 1280, 720, dir, $"preview_{i + 1}_{sw.CurrentName}.png");
+            }
+            sw.Select(-1);
         }
-        sw.Select(-1);
+        else Previews(sw, cam, dir);
+    }
+
+    // 에디터에서는 프리셋을 바꾼 뒤 주변광(HDRI)·반사가 갱신될 때까지 잠깐 기다렸다가 찍음
+    // (바로 찍으면 앞 프리셋의 주변광이 남아서 밝기가 틀어짐)
+    static void Previews(LookSwitcher sw, Camera cam, string dir)
+    {
+        int i = -1, wait = 0;
+        EditorApplication.CallbackFunction tick = null;
+        tick = () =>
+        {
+            if (!sw) { EditorApplication.update -= tick; return; }
+            if (wait == 0)
+            {
+                sw.Select(i);
+                DynamicGI.UpdateEnvironment();
+                foreach (var rp in Object.FindObjectsByType<ReflectionProbe>(FindObjectsSortMode.None)) rp.RenderProbe();
+            }
+            if (++wait < 30) return;
+            ScreenshotTool.Render(cam, 1280, 720, dir, $"preview_{i + 1}_{sw.CurrentName}.png");
+            wait = 0;
+            if (++i >= sw.presets.Count) { sw.Select(-1); EditorApplication.update -= tick; Debug.Log("[RenderTemplate] 미리보기 완료"); }
+        };
+        EditorApplication.update += tick;
     }
 
     // ================================================================ 도우미

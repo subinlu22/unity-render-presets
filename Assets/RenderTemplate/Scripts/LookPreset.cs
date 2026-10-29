@@ -2,14 +2,15 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.PostProcessing;
 
-// 분위기 프리셋 한 벌 (쉐이더팩처럼 파일 하나 = 분위기 하나).
-// Assets/RenderTemplate/Resources/Looks/ 폴더에 넣으면 LookSwitcher가 자동으로 목록에 추가함.
-// 만들기: Project 창 우클릭 > Create > RenderTemplate > Look Preset
+// 분위기 프리셋 한 벌 (쉐이더팩처럼 파일 하나 = 분위기 하나). 원본 파일은 안 바꾸고 화면에만 덧씌움.
+// Assets/RenderTemplate/Resources/Looks/ 폴더에 넣으면 LookSwitcher·패널 목록에 자동으로 추가됨.
+// 만들기: Look Panel의 "지금 프리셋 복제" 버튼, 또는 Project 창 우클릭 > Create > RenderTemplate > Look Preset
 [CreateAssetMenu(menuName = "RenderTemplate/Look Preset", fileName = "Look_New")]
 public class LookPreset : ScriptableObject
 {
     public string displayName = "새 프리셋";
-    public int order = 10;                       // L 키로 넘길 때 순서 (작은 것부터)
+    public int order = 10;                       // 목록 순서 (작은 것부터)
+    [TextArea] public string note;               // 패널에 보일 한 줄 설명
 
     [Header("환경: HDRI 주변광·반사")]
     public Material skybox;                      // Skybox/Panoramic + HDRI
@@ -50,4 +51,20 @@ public class LookPreset : ScriptableObject
 
     [Header("포스트 프로세싱 (AO·비네트·Bloom·DOF·톤매핑)")]
     public PostProcessProfile post;
+
+    [Header("세트: 이 프리셋에서만 보일 배경 (벽·바닥 등 프리팹)")]
+    public GameObject roomPrefab;
+
+    [Header("재질: 켜면 재질 세트로 바꿈 (M 키로도 따로 토글)")]
+    public bool hqMaterials = false;
+    public MaterialSet materialSet;              // 비우면 기본 고퀄 세트 사용 (레퍼런스별 색·재질은 여기에)
+
+    [Header("카메라 (켜면 이 앵글·화각으로, 끄면 원래 카메라)")]
+    public bool overrideCamera = false;
+    public Vector3 cameraOffset = new Vector3(0, 0.3f, 2f);   // 머신 중심 기준 카메라 위치
+    public Vector3 lookOffset;                                 // 머신 중심 기준 바라볼 곳
+    [Range(10, 90)] public float fov = 40f;
+
+    [Header("레퍼런스 사진 (Look Panel에서 겹쳐 보기)")]
+    public Texture2D reference;
 }

@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 661d338a88eb5ac4d944ad10cba27e6e, type: 3}
+  m_Name: Look_05_RealCafe
+  m_EditorClassIdentifier: Assembly-CSharp::LookPreset
+  displayName: "\uC2E4\uC0AC \uCE74\uD398"
+  order: 5
+  note: "\uC2E4\uB0B4 HDRI \uBC30\uACBD\xB7\uCC3D\uAC00 \uD587\uBE5B\xB7\uD39C\uB358\uD2B8,
+    \uACE0\uD004 \uC7AC\uC9C8(\uC2A4\uD14C\uC778\uB9AC\uC2A4\xB7\uC11D\uC7AC\xB7\uB098\uBB34\xB7\uC720\uB9AC),
+    \uD0A4\uC624\uC2A4\uD06C \uD654\uBA74 \uBC1C\uAD11"
+  skybox: {fileID: 2100000, guid: 5bc4cf8f09f0bb341919ed0f60d1ef8a, type: 2}
+  ambientIntensity: 0.9
+  reflectionIntensity: 1
+  showSkybox: 1
+  backgroundColor: {r: 0.12, g: 0.12, b: 0.12, a: 1}
+  fog: 0
+  fogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  fogDensity: 0.05
+  originalLightScale: 0
+  lights:
+  - name: "Window Sun (\uB530\uB73B)"
+    type: 1
+    color: {r: 1, g: 0.9, b: 0.76, a: 1}
+    intensity: 1.1
+    position: {x: 2.2, y: 1.8, z: 1.6}
+    euler: {x: 33.492332, y: 233.97263, z: 0}
+    range: 0
+    spotAngle: 0
+    shadows: 1
+  - name: Pendant
+    type: 0
+    color: {r: 1, g: 0.82, b: 0.6, a: 1}
+    intensity: 2.5
+    position: {x: -0.1, y: 1.3, z: 0.5}
+    euler: {x: 68.5833, y: 168.69008, z: 0.0000011690774}
+    range: 4
+    spotAngle: 70
+    shadows: 1
+  reflectionProbe: 1
+  probeSize: {x: 5, y: 3, z: 4}
+  probeIntensity: 1
+  post: {fileID: 11400000, guid: c087119b458f1374da43f09a1c5c6ba5, type: 2}
+  roomPrefab: {fileID: 8094789886103699923, guid: 0cedd2fa5dcd82c40bb5ee461a0ac034, type: 3}
+  hqMaterials: 1
+  materialSet: {fileID: 0}
+  overrideCamera: 0
+  cameraOffset: {x: 0, y: 0.3, z: 2}
+  lookOffset: {x: 0, y: 0, z: 0}
+  fov: 40
+  reference: {fileID: 0}

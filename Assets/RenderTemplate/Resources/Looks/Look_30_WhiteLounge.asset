@@ -1,0 +1,78 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 661d338a88eb5ac4d944ad10cba27e6e, type: 3}
+  m_Name: Look_30_WhiteLounge
+  m_EditorClassIdentifier: Assembly-CSharp::LookPreset
+  displayName: "\uD654\uC774\uD2B8 \uB77C\uC6B4\uC9C0"
+  order: 30
+  note: "\uBC1D\uC740 \uB77C\uC6B4\uC9C0\xB7\uD770 \uAE30\uACC4\xB7\uACB0 \uC788\uB294
+    \uD770 \uB300\uB9AC\uC11D\xB7\uC624\uD06C \uC138\uB85C \uD648+\uC740\uC740\uD55C
+    LED, \uC9C8\uAC10 \uC788\uB294 \uBCA0\uC774\uC9C0 \uBCBD, \uC67C\uCABD \uCC3D\uBE5B
+    + \uBCBD \uC704 \uB530\uB73B\uD55C \uBE5B \uBC88\uC9D0"
+  skybox: {fileID: 2100000, guid: 740d3df1f96d41047a09a2d3acc8648f, type: 2}
+  ambientIntensity: 0.7
+  reflectionIntensity: 1
+  showSkybox: 1
+  backgroundColor: {r: 0.12, g: 0.12, b: 0.12, a: 1}
+  fog: 0
+  fogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  fogDensity: 0.05
+  originalLightScale: 0
+  lights:
+  - name: "\uCC3D\uBE5B (\uC67C\uCABD)"
+    type: 1
+    color: {r: 1, g: 0.97, b: 0.92, a: 1}
+    intensity: 0.6
+    position: {x: 2.2, y: 1.9, z: 1.3}
+    euler: {x: 36.631813, y: 239.42078, z: 0.0000021278213}
+    range: 0
+    spotAngle: 0
+    shadows: 1
+  - name: "\uBCBD \uBE5B \uBC88\uC9D0 \uC67C\uCABD"
+    type: 2
+    color: {r: 1, g: 0.86, b: 0.7, a: 1}
+    intensity: 1
+    position: {x: 1.05, y: 1.2, z: -0.25}
+    euler: {x: 0, y: 0, z: 0}
+    range: 1.9
+    spotAngle: 0
+    shadows: 0
+  - name: "\uBCBD \uBE5B \uBC88\uC9D0 \uC624\uB978\uCABD"
+    type: 2
+    color: {r: 1, g: 0.86, b: 0.7, a: 1}
+    intensity: 0.8
+    position: {x: -1.3, y: 1.2, z: -0.25}
+    euler: {x: 0, y: 0, z: 0}
+    range: 1.9
+    spotAngle: 0
+    shadows: 0
+  - name: "\uC624\uB978\uCABD \uBC18\uC0AC\uAD11"
+    type: 1
+    color: {r: 0.92, g: 0.95, b: 1, a: 1}
+    intensity: 0.25
+    position: {x: -2, y: 0.8, z: 1.5}
+    euler: {x: 17.744677, y: 126.86989, z: 0}
+    range: 0
+    spotAngle: 0
+    shadows: 0
+  reflectionProbe: 1
+  probeSize: {x: 4, y: 2.5, z: 3}
+  probeIntensity: 1
+  post: {fileID: 11400000, guid: 44192fa73f9648746b5d6d1308dd6392, type: 2}
+  roomPrefab: {fileID: 0}
+  hqMaterials: 1
+  materialSet: {fileID: 11400000, guid: bcad26f4641869c45b780160843cfbc6, type: 2}
+  overrideCamera: 1
+  cameraOffset: {x: 1.0500001, y: 0.36, z: 2.35}
+  lookOffset: {x: -0.15, y: -0.08, z: 0}
+  fov: 38
+  reference: {fileID: 2800000, guid: 20c840950f1c79442bdc6eb11deb4f9c, type: 3}

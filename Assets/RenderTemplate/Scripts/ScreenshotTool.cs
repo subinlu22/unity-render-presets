@@ -16,16 +16,23 @@ public class ScreenshotTool : MonoBehaviour
     void Update()
     {
         if (Input.GetKeyDown(shotKey)) Save(looks ? looks.CurrentName : "shot");
-        if (Input.GetKeyDown(beforeAfterKey) && looks) StartCoroutine(BeforeAfter());
+        if (Input.GetKeyDown(beforeAfterKey)) StartBeforeAfter();
     }
+
+    public void StartBeforeAfter() { if (looks) StartCoroutine(BeforeAfter()); }
 
     IEnumerator BeforeAfter()
     {
         int now = looks.Index;
         string stamp = System.DateTime.Now.ToString("HHmmss");
+        // 프리셋이 카메라를 옮겼으면 원본도 그 앵글에서 찍음 (같은 앵글 비교)
+        var pos = cam.transform.position; var rot = cam.transform.rotation; float fov = cam.fieldOfView;
         looks.Select(-1);
+        var oPos = cam.transform.position; var oRot = cam.transform.rotation; float oFov = cam.fieldOfView;
+        cam.transform.SetPositionAndRotation(pos, rot); cam.fieldOfView = fov;
         yield return null; yield return null;        // 조명·반사 갱신 기다림
         Save("원본", stamp + "_A_before");
+        cam.transform.SetPositionAndRotation(oPos, oRot); cam.fieldOfView = oFov;
         looks.Select(now);
         yield return null; yield return null;
         Save(looks.CurrentName, stamp + "_B_after");
@@ -50,6 +57,7 @@ public class ScreenshotTool : MonoBehaviour
         tex.Apply();
         c.targetTexture = old;
         RenderTexture.active = null;
+        foreach (var ch in Path.GetInvalidFileNameChars()) file = file.Replace(ch, '_');   // ":" 같은 글자 정리
         Directory.CreateDirectory(folder);
         string path = Path.GetFullPath(Path.Combine(folder, file));
         File.WriteAllBytes(path, tex.EncodeToPNG());

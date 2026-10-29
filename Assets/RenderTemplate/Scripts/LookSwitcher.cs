@@ -4,40 +4,51 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.PostProcessing;
 
-// L 키로 분위기 전환: 원본 → 프리셋1 → 프리셋2 … → 원본
-// 흐름: 켤 때 지금 상태(하늘·주변광·조명 밝기·배경)를 기억 → 프리셋 적용(조명·프로브·포스트 추가)
-//       원본으로 돌아갈 때 기억한 값을 되돌리고 추가한 것은 지움. 그래서 끄면 원래 씬과 같음.
+// 분위기 전환: 원본 → 프리셋1 → 프리셋2 … → 원본 (L 키, 패널 버튼)
+// 흐름: 켤 때 지금 상태(하늘·주변광·조명 밝기·배경)를 기억 → 프리셋 적용(조명·프로브·포스트·배경 세트 추가)
+//       원본으로 돌아갈 때 기억한 값을 되돌리고 추가한 것은 지움. 원본 파일은 바뀌지 않음.
 [ExecuteAlways]
 public class LookSwitcher : MonoBehaviour
 {
     public Camera cam;
     public Transform focus;                      // 커피머신 중심 (조명·프로브 위치 기준)
-    public KeyCode key = KeyCode.L;
-    public bool showLabel = true;
+    public Transform model;                      // 재질을 바꿀 모델
+    public MaterialSet hqSet;                    // 고퀄 재질 세트
+    public KeyCode key = KeyCode.L, materialKey = KeyCode.M;
 
     public List<LookPreset> presets = new List<LookPreset>();
     public int Index { get; private set; } = -1; // -1 = 원본
+    public LookPreset Current => Index < 0 ? null : presets[Index];
     public string CurrentName => Index < 0 ? "원본" : presets[Index].displayName;
+    public PostProcessVolume PostVolume { get; private set; }   // 패널의 "효과 강도" 슬라이더용
+    public bool HqOn => _swap.IsOn;
 
     // 되돌리기용 원래 값
     Material _sky; AmbientMode _ambMode; float _ambInt, _reflInt;
     bool _fog; Color _fogColor; float _fogDensity; FogMode _fogMode;
     CameraClearFlags _clear; Color _bg;
+    Vector3 _camPos; Quaternion _camRot; float _camFov;
     readonly Dictionary<Light, float> _orig = new Dictionary<Light, float>();
+    readonly MaterialSwapper _swap = new MaterialSwapper();
+    bool _hqByUser;                              // M 키로 직접 켰는지
     GameObject _rig;                             // 프리셋이 추가한 것들 (저장 안 됨)
 
     void OnEnable() { LoadPresets(); }
-    void OnDisable() { Select(-1); }
+    void OnDisable() { Select(-1); SetHq(false); }
 
     // Resources/Looks 안의 프리셋을 order 순으로 읽음 → 파일만 넣으면 추가됨
     public void LoadPresets()
     {
+        var cur = Current;
         presets = Resources.LoadAll<LookPreset>("Looks").OrderBy(p => p.order).ThenBy(p => p.name).ToList();
+        if (cur) Index = presets.IndexOf(cur);
     }
 
     void Update()
     {
-        if (Application.isPlaying && Input.GetKeyDown(key)) Next();
+        if (!Application.isPlaying) return;
+        if (Input.GetKeyDown(key)) Next();
+        if (Input.GetKeyDown(materialKey)) { _hqByUser = !HqOn; SetHq(_hqByUser); }
     }
 
     public void Next() { Select(Index + 1 < presets.Count ? Index + 1 : -1); }
@@ -47,7 +58,19 @@ public class LookSwitcher : MonoBehaviour
         if (Index >= 0) Restore();
         Index = (i >= 0 && i < presets.Count) ? i : -1;
         if (Index >= 0) Apply(presets[Index]);
+        SetHq(_hqByUser || (Current && Current.hqMaterials));
     }
+
+    public void Reapply() { Select(Index); }     // 프리셋 값을 고친 뒤 다시 적용
+
+    public MaterialSet ActiveSet => Current && Current.materialSet ? Current.materialSet : hqSet;
+
+    public void SetHq(bool on)
+    {
+        if (HqOn) _swap.Restore();               // 프리셋마다 세트가 다를 수 있어서 항상 새로 적용
+        if (on) _swap.Apply(model, ActiveSet);
+    }
+    public void ToggleHqByUser() { _hqByUser = !HqOn; SetHq(_hqByUser); }
 
     void Apply(LookPreset p)
     {
@@ -56,7 +79,18 @@ public class LookSwitcher : MonoBehaviour
         _ambInt = RenderSettings.ambientIntensity; _reflInt = RenderSettings.reflectionIntensity;
         _fog = RenderSettings.fog; _fogColor = RenderSettings.fogColor;
         _fogDensity = RenderSettings.fogDensity; _fogMode = RenderSettings.fogMode;
-        if (cam) { _clear = cam.clearFlags; _bg = cam.backgroundColor; }
+        if (cam)
+        {
+            _clear = cam.clearFlags; _bg = cam.backgroundColor;
+            _camPos = cam.transform.position; _camRot = cam.transform.rotation; _camFov = cam.fieldOfView;
+            if (p.overrideCamera)
+            {
+                Vector3 f = focus ? focus.position : Vector3.zero;
+                cam.transform.position = f + p.cameraOffset;
+                cam.transform.rotation = Quaternion.LookRotation(f + p.lookOffset - cam.transform.position);
+                cam.fieldOfView = p.fov;
+            }
+        }
         _orig.Clear();
         foreach (var l in FindObjectsByType<Light>(FindObjectsSortMode.None)) _orig[l] = l.intensity;
 
@@ -80,9 +114,15 @@ public class LookSwitcher : MonoBehaviour
         // 3) 원래 조명 줄이기
         foreach (var kv in _orig) if (kv.Key) kv.Key.intensity = kv.Value * p.originalLightScale;
 
-        // 4) 추가 조명·프로브·포스트는 _rig 아래에 (돌아갈 때 통째로 지움)
+        // 4) 추가 조명·세트·프로브·포스트는 _rig 아래에 (돌아갈 때 통째로 지움)
         _rig = new GameObject("_LookRig (" + p.displayName + ")") { hideFlags = HideFlags.DontSave };
         Vector3 c = focus ? focus.position : Vector3.zero;
+        if (p.roomPrefab)
+        {
+            var room = Instantiate(p.roomPrefab, _rig.transform);
+            room.name = p.roomPrefab.name;
+            foreach (var t in room.GetComponentsInChildren<Transform>(true)) t.gameObject.hideFlags = HideFlags.DontSave;
+        }
         if (p.lights != null)
             foreach (var r in p.lights)
             {
@@ -108,13 +148,14 @@ public class LookSwitcher : MonoBehaviour
             rp.boxProjection = true; rp.resolution = 256;
             rp.RenderProbe();
         }
+        PostVolume = null;
         if (p.post)
         {
             // 원본용 기본 볼륨보다 우선순위 높게 → 이 프리셋 값이 덮어씀
             var go = new GameObject("PostVolume") { hideFlags = HideFlags.DontSave, layer = 0 };
             go.transform.SetParent(_rig.transform);
-            var v = go.AddComponent<PostProcessVolume>();
-            v.isGlobal = true; v.priority = 10; v.sharedProfile = p.post;
+            PostVolume = go.AddComponent<PostProcessVolume>();
+            PostVolume.isGlobal = true; PostVolume.priority = 10; PostVolume.sharedProfile = p.post;
         }
     }
 
@@ -125,16 +166,14 @@ public class LookSwitcher : MonoBehaviour
         RenderSettings.fog = _fog; RenderSettings.fogColor = _fogColor;
         RenderSettings.fogDensity = _fogDensity; RenderSettings.fogMode = _fogMode;
         DynamicGI.UpdateEnvironment();
-        if (cam) { cam.clearFlags = _clear; cam.backgroundColor = _bg; }
+        if (cam)
+        {
+            cam.clearFlags = _clear; cam.backgroundColor = _bg;
+            cam.transform.SetPositionAndRotation(_camPos, _camRot); cam.fieldOfView = _camFov;
+        }
         foreach (var kv in _orig) if (kv.Key) kv.Key.intensity = kv.Value;
         _orig.Clear();
         if (_rig) { if (Application.isPlaying) Destroy(_rig); else DestroyImmediate(_rig); }
-        _rig = null;
-    }
-
-    void OnGUI()
-    {
-        if (!showLabel || !Application.isPlaying) return;
-        GUI.Label(new Rect(12, 10, 600, 24), $"[L] 분위기: {CurrentName}   [M] 재질   [F12] 4K 스샷   [B] Before/After");
+        _rig = null; PostVolume = null;
     }
 }

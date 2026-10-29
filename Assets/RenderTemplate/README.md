@@ -3,10 +3,24 @@
 cafeSim(웹 three.js 커피머신 시뮬레이터, 내 포크 subinlu22/cafesim)의 3D 장면을 유니티로 가져와서
 라이팅·포스트 효과·분위기를 **프리셋 파일 하나**로 갈아끼우며 비교하는 툴. (Unity 6000.3.11f1, Built-in RP)
 
+원본 파일(모델·재질·씬)은 바뀌지 않음. 프리셋은 화면에만 덧씌우고, 끄면 그대로 돌아옴.
+
+## 패널
+- **에디터 창**: 메뉴 `RenderTemplate > Look Panel`. 플레이 안 해도 버튼으로 프리셋을 바로 씌워 보고,
+  "수정"으로 프리셋 값 고치기 → "다시 적용", "지금 프리셋 복제"로 내 프리셋 만들기, 고퀄 재질 토글, 효과 강도 슬라이더, 4K 스샷
+- **게임 화면 패널**: 플레이하면 왼쪽 위에 뜸 (Tab으로 숨김). 프리셋 버튼, 고퀄 재질, 효과 강도·주변광 슬라이더, 스샷 버튼
+
+## 레퍼런스 사진에 맞추기
+- 프리셋의 `reference`에 사진을 넣으면 Look Panel에 사진이 함께 보이고, 게임 화면 패널에서는 슬라이더로 반투명하게 겹쳐 볼 수 있음
+- 프리셋마다 카메라 앵글·화각(`overrideCamera`)과 전용 재질 세트(`materialSet`)를 가질 수 있음. 모델은 그대로, 색·재질만 바꿈
+- 레퍼런스 프리셋 값은 `Editor/ReferenceLooks.cs`에 정리 (재질 번호는 `Materials/HQ/_분류결과.txt`)
+
 ## 단축키 (플레이 모드)
 | 키 | 기능 |
 |---|---|
-| L | 분위기 전환: 원본 → 스튜디오 → 카페 무드 → 원본 |
+| L | 분위기 전환: 원본 → 실사 카페 → 스튜디오 → 화이트 라운지 → 다크 라운지 → 원본 |
+| M | 고퀄 재질 세트 켜기/끄기 (원본 재질 ↔ 복제해서 조정한 재질) |
+| Tab | 패널 숨기기/보이기 |
 | F12 | 지금 화면 4K(3840x2160) 스크린샷 |
 | B | 같은 앵글로 Before(원본) / After(지금 분위기) 두 장 |
 
@@ -16,8 +30,10 @@ cafeSim(웹 three.js 커피머신 시뮬레이터, 내 포크 subinlu22/cafesim)
 | 파일 | 이름 | 내용 |
 |---|---|---|
 | (없음) | 원본 | 웹과 같은 조명(직사광+보조광+3색 주변광), ACES 톤매핑 |
+| Look_30_WhiteLounge | 화이트 라운지 | `References/ref_install_01.png`에 맞춤. 밝은 라운지, 흰 대리석·밝은 오크 세로 홈, 부드러운 확산광, 3/4 앵글 |
+| Look_40_DarkLounge | 다크 라운지 | 건메탈 커피머신·네이비 디스펜서(앞판 인쇄 색 반전), 진한 대리석, 시멘트 벽, 따뜻한 벽등 |
+| Look_05_RealCafe | 실사 카페 | 실내 HDRI 배경, 나무 바닥·회벽 세트, 창가 햇빛·펜던트, 고퀄 재질(스테인리스·석재·나무·유리), 키오스크 화면, AO·Bloom·DOF·그레인 |
 | Look_10_Studio | 스튜디오 | 키(따뜻)·필(약)·림 조명, HDRI 주변광, 리플렉션 프로브, AO·ACES·약한 비네트 |
-| Look_20_CafeMood | 카페 무드 | 어둡고 따뜻한 펜던트 조명, 안개, 발광체만 Bloom, 머신에 초점(DOF) |
 
 ## 새 분위기 추가하기 (쉐이더팩처럼)
 1. `Resources/Looks/` 안에서 기존 프리셋을 Ctrl+D로 복제 (또는 우클릭 > Create > RenderTemplate > Look Preset)
@@ -40,9 +56,17 @@ cafeSim(웹 three.js 커피머신 시뮬레이터, 내 포크 subinlu22/cafesim)
 | 에셋 | 출처 | 라이선스 |
 |---|---|---|
 | studio_small_09 (HDRI 1k) | https://polyhaven.com/a/studio_small_09 | CC0 |
-| brown_photostudio_02 (HDRI 1k) | https://polyhaven.com/a/brown_photostudio_02 | CC0 |
+| cayley_interior (HDRI 2k) | https://polyhaven.com/a/cayley_interior | CC0 |
+| wood_floor (텍스처 1k) | https://polyhaven.com/a/wood_floor | CC0 |
+| painted_plaster_wall (텍스처 1k) | https://polyhaven.com/a/painted_plaster_wall | CC0 |
+| wood_table_001 (텍스처 1k) | https://polyhaven.com/a/wood_table_001 | CC0 |
+| photo_studio_loft_hall (HDRI 2k) | https://polyhaven.com/a/photo_studio_loft_hall | CC0 |
+| white_oak_veneer (텍스처 1k) | https://polyhaven.com/a/white_oak_veneer | CC0 |
+| Marble012 (텍스처 1K) | https://ambientcg.com/view?id=Marble012 | CC0 |
 
-HDRI 파일은 git에 안 올림. 받기: `python Tools/fetch_polyhaven.py`
+키오스크 화면 이미지(`Models/kiosk_screen.png`)는 내 포크 cafesim 뷰어(`?view=screen`)를 캡처해서 화면 부분만 자른 것.
+
+HDRI·텍스처 파일은 git에 안 올림. 받기: `python Tools/fetch_polyhaven.py`
 
 ## Unity MCP (MCP for Unity 10.3.0)
 `Packages/com.coplaydev.unity-mcp/`에 내장 패키지로 넣어 둠 (94MB라 git 제외).
