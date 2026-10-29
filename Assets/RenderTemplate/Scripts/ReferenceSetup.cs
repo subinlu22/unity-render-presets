@@ -7,7 +7,8 @@ public class ReferenceSetup : ScriptableObject
 {
     public Texture2D reference;
     public string presetName = "새 레퍼런스 룩";
-    public LookPreset basePreset;                // 조명·HDRI·카메라는 여기서 시작
+    public LookPreset basePreset;                // 조명·HDRI·카메라는 여기서 시작 (비우면 규칙의 기본 조명)
+    public LookRules rules;                      // 프리셋 규칙 (비우면 Rules/LookRules_Default)
     public Slot[] slots = DefaultSlots();
     public LookPreset output;                    // 만들어진 프리셋
 

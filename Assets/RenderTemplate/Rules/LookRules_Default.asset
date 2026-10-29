@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1345cbd03a600a6448314d93f918a78b, type: 3}
+  m_Name: LookRules_Default
+  m_EditorClassIdentifier: Assembly-CSharp::LookRules
+  baseLighting: {fileID: 11400000, guid: 6e23336c8bd5ab049bb20a394caa2aaa, type: 2}
+  exposureRange: 0.5
+  contrastRange: 8
+  saturationRange: 12
+  temperatureRange: 10
+  aoIntensity: 0.5
+  vignetteMax: 0.2
+  contactShadow: 0.65
+  albedoMax: 0.85
+  albedoMin: 0.04
+  paint:
+    roughness: 0.75
+    metalness: 0
+  gloss:
+    roughness: 0.25
+    metalness: 0.05
+  metal:
+    roughness: 0.32
+    metalness: 0.6
+  marble:
+    roughness: 0.12
+    metalness: 0
+  wood:
+    roughness: 0.45
+    metalness: 0
+  oakFluted:
+    roughness: 0.5
+    metalness: 0
+  plaster:
+    roughness: 0.85
+    metalness: 0
+  terrazzo:
+    roughness: 0.3
+    metalness: 0
+  wearWall: 0.15
+  wearFloor: 0.2
+  wearCounter: 0.1
+  wearCabinet: 0.15
+  wearMachine: 0.05
+  wearMax: 0.9
+  webEnvScale: 1
+  webLightScale: 0.75

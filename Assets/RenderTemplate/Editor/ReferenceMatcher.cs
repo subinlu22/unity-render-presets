@@ -41,6 +41,7 @@ public class ReferenceMatcher : EditorWindow
         EditorGUILayout.PropertyField(so.FindProperty("reference"), new GUIContent("레퍼런스 사진"));
         EditorGUILayout.PropertyField(so.FindProperty("presetName"), new GUIContent("프리셋 이름"));
         EditorGUILayout.PropertyField(so.FindProperty("basePreset"), new GUIContent("시작 프리셋 (조명·카메라)"));
+        EditorGUILayout.PropertyField(so.FindProperty("rules"), new GUIContent("프리셋 규칙"));
         so.ApplyModifiedProperties();
 
         // ---- 사진 + 영역 그리기
@@ -85,8 +86,9 @@ public class ReferenceMatcher : EditorWindow
         }
         if (GUI.changed) EditorUtility.SetDirty(_setup);
 
+        if (GUILayout.Button("규칙대로 기본값 채우기 (시작 조명·부위별 더티)")) ApplyRuleDefaults(_setup);
         EditorGUILayout.Space();
-        using (new EditorGUI.DisabledScope(!tex || !_setup.basePreset))
+        using (new EditorGUI.DisabledScope(!tex || (!_setup.basePreset && !RulesOf(_setup).baseLighting)))
         {
             if (GUILayout.Button("프리셋 만들기 + 톤 자동 맞추기", GUILayout.Height(28))) { Generate(_setup); ToneMatch(_setup, 6); }
             using (new EditorGUI.DisabledScope(!_setup.output))
@@ -115,11 +117,37 @@ public class ReferenceMatcher : EditorWindow
         }
     }
 
+    // ---------------------------------------------------------------- 규칙
+    static LookRules R;                                                   // 지금 생성에 쓰는 규칙
+    const string DefaultRulesPath = Root + "/Rules/LookRules_Default.asset";
+    public static LookRules DefaultRules()
+    {
+        var r = AssetDatabase.LoadAssetAtPath<LookRules>(DefaultRulesPath);
+        if (r) return r;
+        System.IO.Directory.CreateDirectory(Root + "/Rules"); AssetDatabase.Refresh();
+        r = CreateInstance<LookRules>();
+        r.baseLighting = AssetDatabase.LoadAssetAtPath<LookPreset>(Root + "/Resources/Looks/Look_30_WhiteLounge.asset");
+        AssetDatabase.CreateAsset(r, DefaultRulesPath); AssetDatabase.SaveAssets();
+        return r;
+    }
+    static LookRules RulesOf(ReferenceSetup s) => s.rules ? s.rules : DefaultRules();
+
+    // 규칙대로 기본값 채우기: 시작 조명 + 부위별 더티 기본값 (영역·재질 종류는 그대로)
+    public static void ApplyRuleDefaults(ReferenceSetup s)
+    {
+        var r = RulesOf(s);
+        if (r.baseLighting) s.basePreset = r.baseLighting;
+        foreach (var sl in s.slots) sl.wear = r.DefaultWear(sl.part);
+        EditorUtility.SetDirty(s);
+    }
+
     public static ReferenceSetup CreateSetup(string name)
     {
         string path = AssetDatabase.GenerateUniqueAssetPath(Root + "/References/" + name + ".asset");
         var s = CreateInstance<ReferenceSetup>();
         s.basePreset = AssetDatabase.LoadAssetAtPath<LookPreset>(Root + "/Resources/Looks/Look_30_WhiteLounge.asset");
+        s.rules = DefaultRules();
+        ApplyRuleDefaults(s);
         AssetDatabase.CreateAsset(s, path);
         return s;
     }
@@ -160,6 +188,8 @@ public class ReferenceMatcher : EditorWindow
     // ================================================================ ② 재질·프리셋 만들기
     public static void Generate(ReferenceSetup setup)
     {
+        R = RulesOf(setup);
+        if (!setup.basePreset) setup.basePreset = R.baseLighting;
         foreach (var s in setup.slots) if (s.use && s.rect.width > 0) s.sampled = Sample(setup.reference, s.rect);
         string id = "Ref_" + setup.name.Replace("RefSetup_", "");          // 설정 파일 이름 기준 → 다시 만들어도 같은 파일 덮어씀
         string dir = Root + "/Materials/" + id;
@@ -179,10 +209,11 @@ public class ReferenceMatcher : EditorWindow
                 string path = $"{dir}/{id}_{s.part}_{i:00}.mat";
                 AssetDatabase.DeleteAsset(path);
                 var m = new Material(baseMat);
-                Color c = s.sampled;
+                Color c = R.ClampAlbedo(s.sampled);                         // 규칙: 실제 반사율 범위로
                 if (System.Array.IndexOf(ReferenceLooks.Dividers, i) >= 0) c *= 0.7f;     // 하부장 칸막이는 조금 어둡게
                 ApplySurface(m, s.surface, c, $"{id}_{s.part}");
-                if (s.wear > 0.01f) Weathering.Apply(m, $"{id}_{s.part}_{i:00}", s.wear, peel: s.part == P.하부장 && s.surface == S.무광페인트, seed: i);
+                float wear = Mathf.Min(s.wear, R.wearMax);                   // 규칙: 더티 최대값
+                if (wear > 0.01f) Weathering.Apply(m, $"{id}_{s.part}_{i:00}", wear, peel: s.part == P.하부장 && s.surface == S.무광페인트, seed: i);
                 AssetDatabase.CreateAsset(m, path);
                 var pair = new MaterialSet.Pair { from = from, to = m };
                 if (k >= 0) pairs[k] = pair; else pairs.Add(pair);
@@ -233,7 +264,8 @@ public class ReferenceMatcher : EditorWindow
         }
         cg0.enabled.Override(true);
         // AO는 장면이 작아서(기계 높이 약 0.8m) 세게 걸면 벽에 검은 번짐이 생김 → 약하게 고정
-        if (pp.TryGetSettings(out AmbientOcclusion ao0)) { ao0.intensity.Override(0.5f); ao0.thicknessModifier.Override(1f); }
+        if (pp.TryGetSettings(out AmbientOcclusion ao0)) { ao0.intensity.Override(R.aoIntensity); ao0.thicknessModifier.Override(1f); }
+        if (pp.TryGetSettings(out Vignette vg0)) vg0.intensity.Override(Mathf.Min(vg0.intensity.value, R.vignetteMax));
         EditorUtility.SetDirty(pp);
 
         // 프리셋: 시작 프리셋 복제 → 재질 세트·포스트·레퍼런스 교체
@@ -242,7 +274,8 @@ public class ReferenceMatcher : EditorWindow
         var look = Instantiate(basePreset);
         AssetDatabase.DeleteAsset(lookPath); AssetDatabase.CreateAsset(look, lookPath);
         look.displayName = setup.presetName; look.order = 50; look.materialSet = set; look.post = pp; look.reference = setup.reference;
-        look.hqMaterials = true; look.contactShadow = 0.65f;
+        look.hqMaterials = true; look.contactShadow = R.contactShadow;
+        look.webEnvScale = R.webEnvScale; look.webLightScale = R.webLightScale;
         look.note = "Reference Matcher로 생성: 영역 색 추출 + 재질 종류 + 톤 자동 보정";
 
         // ③ 벽 영역의 왼쪽/오른쪽 밝기 차이 → 주 조명(첫 번째 Directional)을 밝은 쪽으로
@@ -309,11 +342,11 @@ public class ReferenceMatcher : EditorWindow
         var marbleN = ReferenceLooks.T(TP + "AmbientCG/Marble012/Marble012_1K-JPG_NormalGL.jpg");
         switch (surface)
         {
-            case S.무광페인트: Plain(0, 0.75f); break;
-            case S.광택도장: Plain(0.05f, 0.25f); break;
-            case S.금속: Plain(0.6f, 0.32f); break;
+            case S.무광페인트: Plain(R.paint.metalness, R.paint.roughness); break;
+            case S.광택도장: Plain(R.gloss.metalness, R.gloss.roughness); break;
+            case S.금속: Plain(R.metal.metalness, R.metal.roughness); break;
             case S.회벽:
-                Plain(0, 0.85f);
+                Plain(R.plaster.metalness, R.plaster.roughness);
                 ReferenceLooks.Nrm(m, ReferenceLooks.T(TP + "PolyHaven/Textures/painted_plaster_wall/painted_plaster_wall_nor_gl_1k.jpg"), 0.6f, new Vector2(4, 2));
                 break;
             case S.흰대리석:
@@ -322,21 +355,21 @@ public class ReferenceMatcher : EditorWindow
                 bool dark = surface == S.어두운대리석;
                 var vein = dark ? Color.Lerp(c, new Color(0.7f, 0.66f, 0.6f), 0.6f) : c * 0.6f;
                 var tex = ReferenceLooks.Recolor(marble, texName + "_marble", c, vein, invert: true, curve: dark ? 1f : 1.3f);
-                ReferenceLooks.Pbr(m, Color.white, 0, 0.12f);
+                ReferenceLooks.Pbr(m, Color.white, R.marble.metalness, R.marble.roughness);
                 ReferenceLooks.Tex(m, tex, new Vector2(3f, 0.9f)); ReferenceLooks.Nrm(m, marbleN, 0.4f, new Vector2(3f, 0.9f));
                 break;
             }
             case S.원목:
-                Tinted(ReferenceLooks.T(TP + "PolyHaven/Textures/wood_table_001/wood_table_001_diff_1k.jpg"), 0.45f);
+                Tinted(ReferenceLooks.T(TP + "PolyHaven/Textures/wood_table_001/wood_table_001_diff_1k.jpg"), R.wood.roughness);
                 ReferenceLooks.Nrm(m, ReferenceLooks.T(TP + "PolyHaven/Textures/wood_table_001/wood_table_001_nor_gl_1k.jpg"), 1f, new Vector2(3, 1));
                 break;
             case S.테라조:
-                ReferenceLooks.Pbr(m, Color.white, 0, 0.3f);
+                ReferenceLooks.Pbr(m, Color.white, R.terrazzo.metalness, R.terrazzo.roughness);
                 ReferenceLooks.Tex(m, Terrazzo(texName + "_terrazzo", c), new Vector2(4f, 1.2f));
                 if (m.HasProperty("normalTexture")) { m.SetTexture("normalTexture", null); m.DisableKeyword("_NORMALMAP"); }
                 break;
             case S.오크세로홈:
-                Tinted(ReferenceLooks.T(TP + "PolyHaven/Textures/white_oak_veneer/white_oak_veneer_diff_1k.jpg"), 0.5f);
+                Tinted(ReferenceLooks.T(TP + "PolyHaven/Textures/white_oak_veneer/white_oak_veneer_diff_1k.jpg"), R.oakFluted.roughness);
                 ReferenceLooks.Nrm(m, ReferenceLooks.FluteNormal(), 1.4f, new Vector2(32, 1));
                 break;
         }
@@ -394,6 +427,7 @@ public class ReferenceMatcher : EditorWindow
     // 렌더 → 측정 → 포스트 값 보정 을 iterations번 반복. 프리셋 적용 뒤 주변광이 갱신되도록 에디터 프레임을 기다리며 진행
     public static void ToneMatch(ReferenceSetup setup, int iterations)
     {
+        R = RulesOf(setup);
         var sw = FindFirstObjectByType<LookSwitcher>();
         if (!sw || !setup.output) { _status = "씬에 LookSwitcher가 없거나 프리셋이 아직 없음"; return; }
         sw.LoadPresets();
@@ -434,10 +468,10 @@ public class ReferenceMatcher : EditorWindow
             }
             // 화면 밝기는 감마 공간이라 노출(EV)로 바꿀 때 약 2.2배, 한 번에 너무 크게 안 움직이게 줄여서 반영
             // 밝기·대비는 조금만 (시작 프리셋의 조명 톤을 지켜야 실사처럼 그림자가 남음), 색온도·채도는 사진 쪽으로
-            cg.postExposure.value = Mathf.Clamp(cg.postExposure.value + Mathf.Clamp(Mathf.Log(target.lum / Mathf.Max(now.lum, 0.01f), 2) * 0.8f, -0.25f, 0.25f), exp0 - 0.5f, exp0 + 0.5f);
-            cg.temperature.value = Mathf.Clamp(cg.temperature.value + Mathf.Clamp((target.warm - now.warm) * 80f, -5f, 5f), tmp0 - 10f, tmp0 + 10f);
-            cg.contrast.value = Mathf.Clamp(cg.contrast.value + Mathf.Clamp((target.contrast / Mathf.Max(now.contrast, 0.01f) - 1f) * 30f, -4f, 4f), con0 - 8f, con0 + 8f);
-            cg.saturation.value = Mathf.Clamp(cg.saturation.value + Mathf.Clamp((target.sat / Mathf.Max(now.sat, 0.01f) - 1f) * 20f, -5f, 5f), sat0 - 12f, sat0 + 12f);
+            cg.postExposure.value = Mathf.Clamp(cg.postExposure.value + Mathf.Clamp(Mathf.Log(target.lum / Mathf.Max(now.lum, 0.01f), 2) * 0.8f, -0.25f, 0.25f), exp0 - R.exposureRange, exp0 + R.exposureRange);
+            cg.temperature.value = Mathf.Clamp(cg.temperature.value + Mathf.Clamp((target.warm - now.warm) * 80f, -5f, 5f), tmp0 - R.temperatureRange, tmp0 + R.temperatureRange);
+            cg.contrast.value = Mathf.Clamp(cg.contrast.value + Mathf.Clamp((target.contrast / Mathf.Max(now.contrast, 0.01f) - 1f) * 30f, -4f, 4f), con0 - R.contrastRange, con0 + R.contrastRange);
+            cg.saturation.value = Mathf.Clamp(cg.saturation.value + Mathf.Clamp((target.sat / Mathf.Max(now.sat, 0.01f) - 1f) * 20f, -5f, 5f), sat0 - R.saturationRange, sat0 + R.saturationRange);
             EditorUtility.SetDirty(pp);
             iter++;
             _status = $"톤 맞추는 중… {iter}/{iterations}";

@@ -59,6 +59,7 @@ public static class WebLookExporter
                 .Bool("background", p.showSkybox).Arr("bgColor", p.backgroundColor).Num("reflection", p.reflectionIntensity).ToString());
             if (p.fog) j.Raw("fog", new Json().Arr("color", p.fogColor).Num("density", p.fogDensity).ToString());
             j.Num("originalLightScale", p.originalLightScale);
+            j.Raw("web", new Json().Num("env", p.webEnvScale).Num("light", p.webLightScale).Num("exposure", p.webExposure).ToString());
             // 조명
             var lights = new List<string>();
             foreach (var l in p.lights ?? new LookPreset.RigLight[0])

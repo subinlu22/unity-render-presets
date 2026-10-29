@@ -68,6 +68,11 @@ public class LookPreset : ScriptableObject
     public Vector3 lookOffset;                                 // 머신 중심 기준 바라볼 곳
     [Range(10, 90)] public float fov = 40f;
 
+    [Header("웹 시뮬레이터 보정 (웹은 반사·환경광 계산이 달라서 룩마다 밝기를 맞춤, Live Link로 바로 확인)")]
+    [Range(0, 4)] public float webEnvScale = 1f;     // HDRI 환경광·반사 배율 (어두운 HDRI면 올림)
+    [Range(0, 3)] public float webLightScale = 1f;   // 추가 조명 배율
+    [Range(-2, 2)] public float webExposure = 0f;    // 웹 노출 추가 (EV)
+
     [Header("레퍼런스 사진 (Look Panel에서 겹쳐 보기)")]
     public Texture2D reference;
 }

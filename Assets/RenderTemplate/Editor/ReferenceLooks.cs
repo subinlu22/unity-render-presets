@@ -127,6 +127,9 @@ public static class ReferenceLooks
         l.hqMaterials = true; l.materialSet = set; l.contactShadow = 0.6f;
         l.overrideCamera = true; l.cameraOffset = CamWorld - Focus; l.lookOffset = LookWorld - Focus; l.fov = 38f;
         l.reference = AssetDatabase.LoadAssetAtPath<Texture2D>(Root + "/References/" + refName + ".png");
+        // 웹 보정: 같은 앵글에서 유니티 게임 화면과 밝기를 재서 맞춘 값 (다크는 HDRI가 어두워 금속 반사가 죽음 → 환경광 올림)
+        bool dark = file.Contains("Dark");
+        l.webEnvScale = dark ? 2.2f : 1f; l.webLightScale = dark ? 1.35f : 0.75f; l.webExposure = 0f;
         EditorUtility.SetDirty(l);
     }
 
