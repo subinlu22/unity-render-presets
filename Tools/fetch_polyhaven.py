@@ -8,12 +8,10 @@ import json, os, urllib.request
 
 ROOT = os.path.join(os.path.dirname(__file__), "..", "Assets", "RenderTemplate", "ThirdParty", "PolyHaven")
 UA = {"User-Agent": "cafesim-render/1.0"}  # User-Agent 없으면 403
-HDRI = [("studio_small_09", "1k"),       # 스튜디오 프리셋
-        ("cayley_interior", "2k"),       # 실사 카페 프리셋 (배경으로 보임)
-        ("photo_studio_loft_hall", "2k")]  # 레퍼런스(실제 설치) 프리셋: 밝고 부드러운 실내광
-TEXTURES = [("wood_floor", "1k"),            # 바닥
-            ("painted_plaster_wall", "1k"),  # 뒷벽
-            ("wood_table_001", "1k"),        # 카운터 하부장 (실사 카페)
+HDRI = [("cayley_interior", "2k"),       # 다크 라운지 (따뜻한 실내)
+        ("photo_studio_loft_hall", "2k")]  # 화이트 라운지: 밝고 부드러운 실내광
+TEXTURES = [("painted_plaster_wall", "1k"),  # 회벽 노멀
+            ("wood_table_001", "1k"),        # 원목 (Reference Matcher)
             ("white_oak_veneer", "1k")]      # 밝은 오크 하부장 (레퍼런스)
 AMBIENTCG = ["Marble012"]                    # ambientCG(CC0) 흰 대리석 상판 (레퍼런스)
 MAPS = ["Diffuse", "nor_gl", "Rough"]

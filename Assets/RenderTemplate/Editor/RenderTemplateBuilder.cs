@@ -6,7 +6,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.PostProcessing;
 
 // 메뉴 RenderTemplate > Build Demo Scene
-// 하는 일: ① HDRI 스카이 재질·포스트 프로필·프리셋(스튜디오, 실사 카페, 화이트·다크 라운지) 만들기
+// 하는 일: ① HDRI 스카이 재질·포스트 프로필·고퀄 재질 세트·프리셋(화이트·다크 라운지) 만들기
 //         ② 데모 씬 만들기: 커피머신 모델(glb) + 웹과 같은 원래 조명·카메라 + 템플릿 오브젝트
 //         ③ 원본/프리셋별 미리보기 이미지 저장 (Screenshots/preview_*.png)
 // 좌표: 웹(three.js)에서 가져온 값은 x 부호만 바꿈 (glTF 불러올 때 같은 방식으로 뒤집힘)
@@ -29,7 +29,6 @@ public static class RenderTemplateBuilder
         foreach (var d in new[] { PresetDir, LookDir, Root + "/Scenes" }) Directory.CreateDirectory(d);
         AssetDatabase.Refresh();
 
-        var studioSky = Sky("Sky_Studio", HdriDir + "/studio_small_09_1k.hdr");
         float focusDist = Vector3.Distance(CamPos, Target);
 
         // ---------- 원본용 포스트: 웹과 같은 ACES 톤매핑만
@@ -39,40 +38,11 @@ public static class RenderTemplateBuilder
             cg.tonemapper.Override(Tonemapper.ACES); cg.postExposure.Override(0.07f);
         });
 
-        // ---------- 스튜디오
-        var studioPP = Profile("PP_Studio", p =>
-        {
-            var ao = p.AddSettings<AmbientOcclusion>(); ao.enabled.Override(true);
-            ao.mode.Override(AmbientOcclusionMode.MultiScaleVolumetricObscurance); ao.intensity.Override(0.8f);
-            var cg = p.AddSettings<ColorGrading>(); cg.enabled.Override(true);
-            cg.tonemapper.Override(Tonemapper.ACES); cg.postExposure.Override(0.25f); cg.contrast.Override(8f);
-            var vg = p.AddSettings<Vignette>(); vg.enabled.Override(true);
-            vg.intensity.Override(0.22f); vg.smoothness.Override(0.5f);
-        });
-        Look("Look_10_Studio", "스튜디오", 10, studioSky, studioPP, l =>
-        {
-            l.ambientIntensity = 0.55f; l.reflectionIntensity = 1f;
-            l.backgroundColor = new Color(0.15f, 0.15f, 0.16f);
-            l.lights = new[]
-            {
-                Dir("Key (따뜻)", new Color(1f, 0.93f, 0.84f), 1.5f, new Vector3(1.5f, 2.0f, 2.0f), true),
-                Dir("Fill (약하게)", new Color(0.85f, 0.9f, 1f), 0.35f, new Vector3(-2.0f, 0.8f, 1.5f), false),
-                Dir("Rim", Color.white, 1.6f, new Vector3(0.6f, 1.8f, -2.5f), false),
-            };
-        });
-
-        // ---------- 실사 카페: 고퀄 재질 세트 + 룸 세트 + 실내 HDRI
+        // ---------- 고퀄 재질 세트 (모든 프리셋·Reference Matcher의 바탕 재질)
         var hq = RealisticBuilder.BuildMaterialSet(ModelPath);
-        var tmp = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(ModelPath));
-        var b = new Bounds(tmp.transform.position, Vector3.zero);
-        foreach (var r in tmp.GetComponentsInChildren<Renderer>()) b.Encapsulate(r.bounds);
-        Object.DestroyImmediate(tmp);
-        var room = RealisticBuilder.BuildRoom(b);
-        RealisticBuilder.BuildPreset(Sky("Sky_RealCafe", HdriDir + "/cayley_interior_2k.hdr"),
-                                     RealisticBuilder.BuildPost(PresetDir, focusDist), room);
         AssetDatabase.SaveAssets();
 
-        // ---------- 레퍼런스 사진에 맞춘 프리셋 (실제 설치 / 프리미엄)
+        // ---------- 레퍼런스 사진에 맞춘 프리셋 (화이트 라운지 / 다크 라운지)
         ReferenceLooks.Build(ModelPath, focusDist);
 
         BuildScene(basePP, hq);

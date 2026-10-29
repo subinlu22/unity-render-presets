@@ -18,10 +18,10 @@ public static class ReferenceLooks
     const string TP = Root + "/ThirdParty/";
 
     // 기계·부품별 재질 번호 (에디터에서 기계별로 쓰는 재질을 조회해서 정함)
-    static readonly int[] BigBody = { 4, 23 }, IceBody = { 1 }, CupBody = { 7 };
-    static readonly int[] PanelDecals = { 2, 3, 22, 8, 9 };          // 제빙기·컵 디스펜서 앞판 인쇄
-    const int Glass = 0, DarkMetal = 21, Counter = 11, Cabinet = 12, Plinth = 16, Floor = 17, Wall = 18, Kiosk = 10;
-    static readonly int[] Dividers = { 13, 14, 15 };
+    internal static readonly int[] BigBody = { 4, 23 }, IceBody = { 1 }, CupBody = { 7 };
+    internal static readonly int[] PanelDecals = { 2, 3, 22, 8, 9 };          // 제빙기·컵 디스펜서 앞판 인쇄
+    internal const int Glass = 0, DarkMetal = 21, Counter = 11, Cabinet = 12, Plinth = 16, Floor = 17, Wall = 18, Kiosk = 10;
+    internal static readonly int[] Dividers = { 13, 14, 15 };
 
     static Vector3 Focus => new Vector3(0.15f, 0.32f, 0f);              // RenderTemplateBuilder.Target 과 같음
     static readonly Vector3 CamWorld = new Vector3(1.2f, 0.68f, 2.35f), LookWorld = new Vector3(0.0f, 0.24f, 0.0f);
@@ -160,23 +160,23 @@ public static class ReferenceLooks
     static Dictionary<int, Action<Material>> Each(IEnumerable<int> ids, Action<Material> a) => ids.ToDictionary(i => i, i => a);
 
     // ================================================================ 재질 도우미 (glTF 셰이더 속성)
-    static void Pbr(Material m, Color c, float metal, float rough)
+    internal static void Pbr(Material m, Color c, float metal, float rough)
     {
         if (m.HasProperty("metallicFactor")) { m.SetFloat("metallicFactor", metal); m.SetFloat("roughnessFactor", rough); }
         m.SetColor("baseColorFactor", c);
     }
-    static void Tex(Material m, Texture t, Vector2 tiling)
+    internal static void Tex(Material m, Texture t, Vector2 tiling)
     {
         if (!t) return;
         m.SetTexture("baseColorTexture", t); m.SetTextureScale("baseColorTexture", tiling); m.EnableKeyword("_TEXTURE_TRANSFORM");
     }
-    static void Nrm(Material m, Texture t, float scale, Vector2 tiling)
+    internal static void Nrm(Material m, Texture t, float scale, Vector2 tiling)
     {
         if (!t || !m.HasProperty("normalTexture")) return;
         m.SetTexture("normalTexture", t); m.SetFloat("normalTexture_scale", scale);
         m.SetTextureScale("normalTexture", tiling); m.EnableKeyword("_NORMALMAP"); m.EnableKeyword("_TEXTURE_TRANSFORM");
     }
-    static void Glow(Material m, Color e)
+    internal static void Glow(Material m, Color e)
     {
         Pbr(m, Color.black, 0, 0.5f);
         m.SetColor("emissiveFactor", e); m.EnableKeyword("_EMISSION");
@@ -220,7 +220,7 @@ public static class ReferenceLooks
     }
 
     // ================================================================ 텍스처 만들기
-    static Texture2D T(string path)
+    internal static Texture2D T(string path)
     {
         var imp = AssetImporter.GetAtPath(path) as TextureImporter;
         if (imp && path.Contains("Normal") || imp && path.Contains("_nor_"))
@@ -238,7 +238,7 @@ public static class ReferenceLooks
     }
 
     // 세로 홈(플루팅) 노멀맵: 한 장에 홈 8개, 가로로 반복해서 씀
-    static Texture2D FluteNormal()
+    internal static Texture2D FluteNormal()
     {
         string path = Gen + "/FluteNormal.png";
         if (!File.Exists(path))
@@ -265,7 +265,7 @@ public static class ReferenceLooks
 
     // 텍스처 색 바꾸기: 밝기 기준으로 bg↔fg 사이를 칠함 (invert면 어두운 곳이 fg)
     // keepColor: 빨강·파랑 아이콘처럼 채도 높은 픽셀은 원래 색 유지
-    static Texture2D Recolor(Texture2D src, string name, Color bg, Color fg, bool invert, bool keepColor = false, float curve = 1f)
+    internal static Texture2D Recolor(Texture2D src, string name, Color bg, Color fg, bool invert, bool keepColor = false, float curve = 1f)
     {
         if (!src) return null;
         string safe = string.Join("_", name.Split(Path.GetInvalidFileNameChars())).Replace(' ', '_');

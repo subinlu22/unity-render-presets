@@ -65,4 +65,4 @@ MonoBehaviour:
   cameraOffset: {x: 1.0500001, y: 0.36, z: 2.35}
   lookOffset: {x: -0.15, y: -0.08, z: 0}
   fov: 38
-  reference: {fileID: 0}
+  reference: {fileID: 2800000, guid: c2f1388f97a5c974bbc136c7655d3b1c, type: 3}

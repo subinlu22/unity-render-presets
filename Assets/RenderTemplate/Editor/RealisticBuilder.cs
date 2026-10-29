@@ -3,11 +3,10 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering.PostProcessing;
 
-// "실사 카페" 프리셋에 필요한 것 만들기 (RenderTemplateBuilder.Build 안에서 불림)
-// ① 고퀄 재질 세트: 모델 원본 재질을 복제해서 성질별로 조정 (원본은 그대로)
-//    스테인리스·유리·석재 상판·나무 하부장·광택 도장·키오스크 화면(웹 스크린샷 발광)
-// ② 룸 세트 프리팹: 나무 바닥 + 회벽 (이 프리셋에서만 보임)
-// ③ 프리셋: HDRI 배경(실내) + 창가 햇빛 + 펜던트 + 실사용 포스트(AO·Bloom·DOF·그레인)
+// 고퀄 재질 세트 만들기 (RenderTemplateBuilder.Build 안에서 불림)
+// 모델 원본 재질을 복제해서 성질별로 조정 (원본은 그대로)
+// 스테인리스·유리·석재 상판·나무 하부장·광택 도장·키오스크 화면(웹 스크린샷)
+// 모든 프리셋과 Reference Matcher가 이 세트를 바탕으로 색·재질을 덮어씀
 public static class RealisticBuilder
 {
     const string Root = "Assets/RenderTemplate";
@@ -75,74 +74,6 @@ public static class RealisticBuilder
         return set;
     }
 
-    public static GameObject BuildRoom(Bounds model)
-    {
-        var floorM = StdMat("Room_WoodFloor", "wood_floor/wood_floor_diff_1k.jpg", "wood_floor/wood_floor_nor_gl_1k.jpg", new Vector2(6, 6), 0.45f);
-        var wallM = StdMat("Room_PlasterWall", "painted_plaster_wall/painted_plaster_wall_diff_1k.jpg", "painted_plaster_wall/painted_plaster_wall_nor_gl_1k.jpg", new Vector2(3, 1.5f), 0.1f);
-        var root = new GameObject("Room_RealCafe");
-        var floor = GameObject.CreatePrimitive(PrimitiveType.Plane);
-        floor.name = "Floor"; floor.transform.SetParent(root.transform);
-        floor.transform.position = new Vector3(model.center.x, model.min.y - 0.002f, model.center.z + 1.5f);
-        floor.transform.localScale = new Vector3(1.2f, 1, 1.2f);       // 12m x 12m
-        floor.GetComponent<Renderer>().sharedMaterial = floorM;
-        var wall = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        wall.name = "BackWall"; wall.transform.SetParent(root.transform);
-        wall.transform.position = new Vector3(model.center.x, model.min.y + 1.6f, model.min.z - 0.03f);
-        wall.transform.localScale = new Vector3(8f, 3.2f, 1f);
-        wall.GetComponent<Renderer>().sharedMaterial = wallM;          // Quad 앞면이 -z를 보므로 카메라(+z) 쪽에서 보이게 회전
-        wall.transform.rotation = Quaternion.Euler(0, 180, 0);
-        foreach (var col in root.GetComponentsInChildren<Collider>()) Object.DestroyImmediate(col);
-        string path = Root + "/Presets/Room_RealCafe.prefab";
-        var prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
-        Object.DestroyImmediate(root);
-        return prefab;
-    }
-
-    public static void BuildPreset(Material sky, PostProcessProfile pp, GameObject room)
-    {
-        string path = Root + "/Resources/Looks/Look_05_RealCafe.asset";
-        var l = Load<LookPreset>(path);
-        l.displayName = "실사 카페"; l.order = 5;
-        l.note = "실내 HDRI 배경·창가 햇빛·펜던트, 고퀄 재질(스테인리스·석재·나무·유리), 키오스크 화면 발광";
-        l.skybox = sky; l.showSkybox = true; l.ambientIntensity = 0.9f; l.reflectionIntensity = 1f;
-        l.originalLightScale = 0f; l.post = pp; l.roomPrefab = room; l.hqMaterials = true;
-        l.reflectionProbe = true; l.probeSize = new Vector3(5, 3, 4); l.probeIntensity = 1f;
-        l.fog = false;
-        Vector3 win = new Vector3(2.2f, 1.8f, 1.6f);                   // 왼쪽 앞 위 창문 방향
-        Vector3 pend = new Vector3(-0.1f, 1.3f, 0.5f);
-        l.lights = new[]
-        {
-            new LookPreset.RigLight { name = "Window Sun (따뜻)", type = LightType.Directional, color = new Color(1f, 0.9f, 0.76f),
-                intensity = 1.1f, position = win, euler = Quaternion.LookRotation(-win).eulerAngles, shadows = true },
-            new LookPreset.RigLight { name = "Pendant", type = LightType.Spot, color = new Color(1f, 0.82f, 0.6f),
-                intensity = 2.5f, position = pend, euler = Quaternion.LookRotation(-pend).eulerAngles, range = 4f, spotAngle = 70f, shadows = true },
-        };
-        EditorUtility.SetDirty(l);
-    }
-
-    public static PostProcessProfile BuildPost(string presetDir, float focusDist)
-    {
-        string path = presetDir + "/PP_RealCafe.asset";
-        AssetDatabase.DeleteAsset(path);
-        var p = ScriptableObject.CreateInstance<PostProcessProfile>();
-        AssetDatabase.CreateAsset(p, path);
-        var ao = p.AddSettings<AmbientOcclusion>(); ao.enabled.Override(true);
-        ao.mode.Override(AmbientOcclusionMode.MultiScaleVolumetricObscurance); ao.intensity.Override(0.9f);
-        var cg = p.AddSettings<ColorGrading>(); cg.enabled.Override(true);
-        cg.tonemapper.Override(Tonemapper.ACES); cg.postExposure.Override(0.15f);
-        cg.contrast.Override(10f); cg.saturation.Override(4f); cg.temperature.Override(4f);
-        var bl = p.AddSettings<Bloom>(); bl.enabled.Override(true);
-        bl.threshold.Override(1.0f); bl.intensity.Override(1.2f); bl.softKnee.Override(0.5f);
-        var dof = p.AddSettings<DepthOfField>(); dof.enabled.Override(true);
-        dof.focusDistance.Override(focusDist); dof.aperture.Override(4f); dof.focalLength.Override(45f);
-        var vg = p.AddSettings<Vignette>(); vg.enabled.Override(true); vg.intensity.Override(0.22f); vg.smoothness.Override(0.5f);
-        var gr = p.AddSettings<Grain>(); gr.enabled.Override(true); gr.intensity.Override(0.12f); gr.size.Override(0.8f);
-        var ca = p.AddSettings<ChromaticAberration>(); ca.enabled.Override(true); ca.intensity.Override(0.04f);
-        foreach (var s in p.settings) { s.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector; AssetDatabase.AddObjectToAsset(s, p); }
-        EditorUtility.SetDirty(p);
-        return p;
-    }
-
     // ---------------------------------------------------------------- 도우미
     static Texture2D T(string rel) => AssetDatabase.LoadAssetAtPath<Texture2D>(Tex + rel);
     static bool Near(Color a, Color b) => Mathf.Abs(a.r - b.r) + Mathf.Abs(a.g - b.g) + Mathf.Abs(a.b - b.b) < 0.06f;
@@ -154,19 +85,6 @@ public static class RealisticBuilder
     {
         if (!n) return;
         h.SetTexture("normalTexture", n); h.SetFloat("normalTexture_scale", scale); h.EnableKeyword("_NORMALMAP");
-    }
-
-    static Material StdMat(string name, string diff, string nor, Vector2 tiling, float smooth)
-    {
-        string path = Root + "/Presets/" + name + ".mat";
-        var m = AssetDatabase.LoadAssetAtPath<Material>(path);
-        if (!m) { m = new Material(Shader.Find("Standard")); AssetDatabase.CreateAsset(m, path); }
-        m.SetTexture("_MainTex", T(diff)); m.mainTextureScale = tiling;
-        var n = T(nor);
-        if (n) { m.SetTexture("_BumpMap", n); m.SetTextureScale("_BumpMap", tiling); m.EnableKeyword("_NORMALMAP"); }
-        m.SetFloat("_Glossiness", smooth);
-        EditorUtility.SetDirty(m);
-        return m;
     }
 
     static void NormalMaps()

@@ -10,7 +10,20 @@ cafeSim(웹 three.js 커피머신 시뮬레이터, 내 포크 subinlu22/cafesim)
   "수정"으로 프리셋 값 고치기 → "다시 적용", "지금 프리셋 복제"로 내 프리셋 만들기, 고퀄 재질 토글, 효과 강도 슬라이더, 4K 스샷
 - **게임 화면 패널**: 플레이하면 왼쪽 위에 뜸 (Tab으로 숨김). 프리셋 버튼, 고퀄 재질, 효과 강도·주변광 슬라이더, 스샷 버튼
 
-## 레퍼런스 사진에 맞추기
+## Reference Matcher: 레퍼런스 사진으로 프리셋 만들기 (메뉴 RenderTemplate > Reference Matcher)
+1. "새 설정 만들기" → 레퍼런스 사진(png/jpg, Assets 안), 프리셋 이름, 시작 프리셋(조명·카메라) 지정
+2. 부위(벽·바닥·상판·하부장·커피머신·제빙기·컵 디스펜서)마다 "영역 지정"을 누르고 사진 위를 드래그, 재질 종류 선택
+   (무광페인트·광택도장·금속·흰대리석·어두운대리석·원목·오크세로홈·회벽·테라조)
+3. "프리셋 만들기 + 톤 자동 맞추기"를 누르면 툴이 자동으로
+   - 영역 색 추출(중앙값) → 재질 종류에 입혀 재질 생성 (원목·대리석은 결을 유지한 채 그 색으로 다시 칠함)
+   - 디스펜서 본체가 어두우면 앞판 인쇄를 밝은 글씨로 반전
+   - 벽 왼쪽/오른쪽 밝기 차이로 주 조명 방향 결정
+   - 사진과 렌더의 밝기(중앙값)·대비(밝은쪽-어두운쪽)·채도·색온도를 비교해 포스트 값을 반복 보정, 오차를 창에 표시
+4. 결과는 `Resources/Looks/Look_50_*`에 새 프리셋으로 생기고 L 키·패널 목록에 바로 들어감. 모델은 그대로
+
+예시: `References/RefSetup_Vintage` (빈티지 그린, 톤 오차 0.879 → 0.166), `References/RefSetup_Retro` (레트로 분식, 0.801 → 0.030)
+
+## 레퍼런스 사진에 맞추기 (수동 프리셋)
 - 프리셋의 `reference`에 사진을 넣으면 Look Panel에 사진이 함께 보이고, 게임 화면 패널에서는 슬라이더로 반투명하게 겹쳐 볼 수 있음
 - 프리셋마다 카메라 앵글·화각(`overrideCamera`)과 전용 재질 세트(`materialSet`)를 가질 수 있음. 모델은 그대로, 색·재질만 바꿈
 - 레퍼런스 프리셋 값은 `Editor/ReferenceLooks.cs`에 정리 (재질 번호는 `Materials/HQ/_분류결과.txt`)
@@ -18,7 +31,7 @@ cafeSim(웹 three.js 커피머신 시뮬레이터, 내 포크 subinlu22/cafesim)
 ## 단축키 (플레이 모드)
 | 키 | 기능 |
 |---|---|
-| L | 분위기 전환: 원본 → 실사 카페 → 스튜디오 → 화이트 라운지 → 다크 라운지 → 원본 |
+| L | 분위기 전환: 원본 → 화이트 라운지 → 다크 라운지 → (Reference Matcher로 만든 프리셋) → 원본 |
 | M | 고퀄 재질 세트 켜기/끄기 (원본 재질 ↔ 복제해서 조정한 재질) |
 | Tab | 패널 숨기기/보이기 |
 | F12 | 지금 화면 4K(3840x2160) 스크린샷 |
@@ -32,8 +45,8 @@ cafeSim(웹 three.js 커피머신 시뮬레이터, 내 포크 subinlu22/cafesim)
 | (없음) | 원본 | 웹과 같은 조명(직사광+보조광+3색 주변광), ACES 톤매핑 |
 | Look_30_WhiteLounge | 화이트 라운지 | `References/ref_install_01.png`에 맞춤. 밝은 라운지, 흰 대리석·밝은 오크 세로 홈, 부드러운 확산광, 3/4 앵글 |
 | Look_40_DarkLounge | 다크 라운지 | 건메탈 커피머신·네이비 디스펜서(앞판 인쇄 색 반전), 진한 대리석, 시멘트 벽, 따뜻한 벽등 |
-| Look_05_RealCafe | 실사 카페 | 실내 HDRI 배경, 나무 바닥·회벽 세트, 창가 햇빛·펜던트, 고퀄 재질(스테인리스·석재·나무·유리), 키오스크 화면, AO·Bloom·DOF·그레인 |
-| Look_10_Studio | 스튜디오 | 키(따뜻)·필(약)·림 조명, HDRI 주변광, 리플렉션 프로브, AO·ACES·약한 비네트 |
+| Look_50_Ref_Vintage | 빈티지 그린 | Reference Matcher로 생성한 예시 (원목 상판·올리브 그린 하부장·크림색 디스펜서) |
+| Look_50_Ref_Retro | 레트로 분식 | Reference Matcher로 생성한 예시 (테라조 상판·머스터드 제빙기·청록 디스펜서·청록 하부장) |
 
 ## 새 분위기 추가하기 (쉐이더팩처럼)
 1. `Resources/Looks/` 안에서 기존 프리셋을 Ctrl+D로 복제 (또는 우클릭 > Create > RenderTemplate > Look Preset)
@@ -55,9 +68,7 @@ cafeSim(웹 three.js 커피머신 시뮬레이터, 내 포크 subinlu22/cafesim)
 ## 외부 에셋 출처 (모두 CC0)
 | 에셋 | 출처 | 라이선스 |
 |---|---|---|
-| studio_small_09 (HDRI 1k) | https://polyhaven.com/a/studio_small_09 | CC0 |
 | cayley_interior (HDRI 2k) | https://polyhaven.com/a/cayley_interior | CC0 |
-| wood_floor (텍스처 1k) | https://polyhaven.com/a/wood_floor | CC0 |
 | painted_plaster_wall (텍스처 1k) | https://polyhaven.com/a/painted_plaster_wall | CC0 |
 | wood_table_001 (텍스처 1k) | https://polyhaven.com/a/wood_table_001 | CC0 |
 | photo_studio_loft_hall (HDRI 2k) | https://polyhaven.com/a/photo_studio_loft_hall | CC0 |

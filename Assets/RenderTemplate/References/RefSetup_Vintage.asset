@@ -1,0 +1,104 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61e114c58a3478146958ee359c56aff7, type: 3}
+  m_Name: RefSetup_Vintage
+  m_EditorClassIdentifier: Assembly-CSharp::ReferenceSetup
+  reference: {fileID: 2800000, guid: e365619e8217db74592b2b5cea06c755, type: 3}
+  presetName: "\uBE48\uD2F0\uC9C0 \uADF8\uB9B0"
+  basePreset: {fileID: 11400000, guid: 6e23336c8bd5ab049bb20a394caa2aaa, type: 2}
+  slots:
+  - part: 0
+    use: 1
+    surface: 7
+    rect:
+      serializedVersion: 2
+      x: 0.16
+      y: 0.25
+      width: 0.099999994
+      height: 0.19999999
+    sampled: {r: 0.62352943, g: 0.5411765, b: 0.45098042, a: 1}
+  - part: 1
+    use: 1
+    surface: 0
+    rect:
+      serializedVersion: 2
+      x: 0.85
+      y: 0.88
+      width: 0.13
+      height: 0.110000014
+    sampled: {r: 0.86274517, g: 0.83921576, b: 0.75294125, a: 1}
+  - part: 2
+    use: 1
+    surface: 5
+    rect:
+      serializedVersion: 2
+      x: 0.22
+      y: 0.7
+      width: 0.63
+      height: 0.07999998
+    sampled: {r: 0.43137258, g: 0.34901962, b: 0.25882354, a: 1}
+  - part: 3
+    use: 1
+    surface: 0
+    rect:
+      serializedVersion: 2
+      x: 0.3
+      y: 0.86
+      width: 0.5
+      height: 0.13
+    sampled: {r: 0.3019608, g: 0.28235295, b: 0.19215688, a: 1}
+  - part: 4
+    use: 1
+    surface: 2
+    rect:
+      serializedVersion: 2
+      x: 0.3
+      y: 0.66
+      width: 0.21999997
+      height: 0.03999996
+    sampled: {r: 0.41960788, g: 0.3647059, b: 0.32156864, a: 1}
+  - part: 5
+    use: 1
+    surface: 1
+    rect:
+      serializedVersion: 2
+      x: 0.6
+      y: 0.25
+      width: 0.03999996
+      height: 0.02000001
+    sampled: {r: 0.77647066, g: 0.7137255, b: 0.6117647, a: 1}
+  - part: 6
+    use: 1
+    surface: 1
+    rect:
+      serializedVersion: 2
+      x: 0.68
+      y: 0.42
+      width: 0.050000012
+      height: 0.08000001
+    sampled: {r: 0.79215693, g: 0.76470596, b: 0.70980394, a: 1}
+  output: {fileID: 11400000, guid: 8f7ba7905186f1a4781d5569a3ec65f5, type: 2}
+  log: "\uC870\uBA85 \uBC29\uD5A5: \uBCBD \uC67C\uCABD \uBC1D\uAE30 0.56 / \uC624\uB978\uCABD
+    0.52 \u2192 \uC67C\uCABD\uC5D0\uC11C \uBE44\uCDA4\n\uB808\uD37C\uB7F0\uC2A4:
+    \uBC1D\uAE30 0.425 \uB300\uBE44 0.665 \uCC44\uB3C4 0.136 \uB530\uB73B\uD568 +0.144\n0\uD68C:
+    \uBC1D\uAE30 0.107 \uB300\uBE44 0.222 \uCC44\uB3C4 0.058 \uB530\uB73B\uD568 +0.104 
+    (\uC624\uCC28 0.879)\n1\uD68C: \uBC1D\uAE30 0.165 \uB300\uBE44 0.342 \uCC44\uB3C4
+    0.103 \uB530\uB73B\uD568 +0.152  (\uC624\uCC28 0.624)\n2\uD68C: \uBC1D\uAE30
+    0.262 \uB300\uBE44 0.508 \uCC44\uB3C4 0.157 \uB530\uB73B\uD568 +0.194  (\uC624\uCC28
+    0.391)\n3\uD68C: \uBC1D\uAE30 0.335 \uB300\uBE44 0.598 \uCC44\uB3C4 0.156 \uB530\uB73B\uD568
+    +0.186  (\uC624\uCC28 0.219)\n4\uD68C: \uBC1D\uAE30 0.335 \uB300\uBE44 0.601
+    \uCC44\uB3C4 0.122 \uB530\uB73B\uD568 +0.142  (\uC624\uCC28 0.170)\n5\uD68C:
+    \uBC1D\uAE30 0.335 \uB300\uBE44 0.601 \uCC44\uB3C4 0.128 \uB530\uB73B\uD568 +0.149 
+    (\uC624\uCC28 0.167)\n6\uD68C: \uBC1D\uAE30 0.335 \uB300\uBE44 0.601 \uCC44\uB3C4
+    0.127 \uB530\uB73B\uD568 +0.147  (\uC624\uCC28 0.166)\n\u2192 \uC624\uCC28 0.879
+    \u2192 0.166\n\uCD5C\uC885 \uD3EC\uC2A4\uD2B8: \uB178\uCD9C +2.00 \uC0C9\uC628\uB3C4
+    -5 \uB300\uBE44 +30 \uCC44\uB3C4 +9"
