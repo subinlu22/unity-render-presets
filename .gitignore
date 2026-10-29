@@ -17,3 +17,5 @@
 # 외부 원본 에셋 (Tools/fetch_polyhaven.py로 받기)
 /Assets/RenderTemplate/ThirdParty/
 /Assets/RenderTemplate/ThirdParty.meta
+# MCP for Unity 10.3.0 (내장 패키지, 용량 커서 git 제외)
+/Packages/com.coplaydev.unity-mcp/

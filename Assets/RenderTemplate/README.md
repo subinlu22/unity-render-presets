@@ -43,3 +43,9 @@ cafeSim(웹 three.js 커피머신 시뮬레이터, 내 포크 subinlu22/cafesim)
 | brown_photostudio_02 (HDRI 1k) | https://polyhaven.com/a/brown_photostudio_02 | CC0 |
 
 HDRI 파일은 git에 안 올림. 받기: `python Tools/fetch_polyhaven.py`
+
+## Unity MCP (MCP for Unity 10.3.0)
+`Packages/com.coplaydev.unity-mcp/`에 내장 패키지로 넣어 둠 (94MB라 git 제외).
+이 드라이브에서는 git 주소로 설치가 실패해서 복사 방식을 씀. 다른 PC에서는 Package Manager >
+Add package from git URL: `https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#v10.3.0`
+에디터를 열면 서버가 http://127.0.0.1:8080 에서 자동으로 켜짐.
