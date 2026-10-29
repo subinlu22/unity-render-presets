@@ -8,7 +8,13 @@ cafeSim(웹 three.js 커피머신 시뮬레이터, 내 포크 subinlu22/cafesim)
 ## 패널
 - **에디터 창**: 메뉴 `RenderTemplate > Look Panel`. 플레이 안 해도 버튼으로 프리셋을 바로 씌워 보고,
   "수정"으로 프리셋 값 고치기 → "다시 적용", "지금 프리셋 복제"로 내 프리셋 만들기, 고퀄 재질 토글, 효과 강도 슬라이더, 4K 스샷
-- **게임 화면 패널**: 플레이하면 왼쪽 위에 뜸 (Tab으로 숨김). 프리셋 버튼, 고퀄 재질, 효과 강도·주변광 슬라이더, 스샷 버튼
+- **게임 화면 패널**: 플레이하면 왼쪽 위에 뜸 (H로 숨김). 프리셋 버튼, 고퀄 재질, 효과 강도·주변광 슬라이더, 스샷 버튼
+
+## 웹 시뮬레이터에 적용 (메뉴 RenderTemplate > Export Looks to Web)
+- 프리셋마다 look.json + 텍스처를 웹 시뮬레이터(cafesim 포크, look-presets 브랜치)의 `packages/viewer/public/looks/`로 내보냄
+- 웹의 LookLayer가 돌아가는 시뮬레이터 위에 같은 룩을 씌움 (오른쪽 아래 "룩" 선택창, "원본"이면 원래대로)
+- 재질 연결: 유니티 렌더러 이름 Node-N = glb 노드 → glb 재질 번호, 웹은 GLTFExporter 순서로 같은 번호를 찾음
+- 웹 포스트 효과는 three.js(GTAO·UnrealBloom·색 보정) 버전이라 유니티와 조금 다름, DOF 없음
 
 ## Reference Matcher: 레퍼런스 사진으로 프리셋 만들기 (메뉴 RenderTemplate > Reference Matcher)
 1. "새 설정 만들기" → 레퍼런스 사진(png/jpg, Assets 안), 프리셋 이름, 시작 프리셋(조명·카메라) 지정
@@ -28,12 +34,15 @@ cafeSim(웹 three.js 커피머신 시뮬레이터, 내 포크 subinlu22/cafesim)
 - 프리셋마다 카메라 앵글·화각(`overrideCamera`)과 전용 재질 세트(`materialSet`)를 가질 수 있음. 모델은 그대로, 색·재질만 바꿈
 - 레퍼런스 프리셋 값은 `Editor/ReferenceLooks.cs`에 정리 (재질 번호는 `Materials/HQ/_분류결과.txt`)
 
+- Look Panel에서 고른 프리셋은 씬에 기억돼서 플레이를 눌러도 같은 룩으로 시작함 (LookSwitcher의 startPreset)
+- 씬 뷰에서도 포스트 효과를 보려면 씬 뷰 위쪽 효과 메뉴(그림 아이콘)에서 Post Processing 켜기. 씬 뷰는 프리셋 카메라 앵글을 따르지 않음
+
 ## 단축키 (플레이 모드)
 | 키 | 기능 |
 |---|---|
 | L | 분위기 전환: 원본 → 화이트 라운지 → 다크 라운지 → (Reference Matcher로 만든 프리셋) → 원본 |
 | M | 고퀄 재질 세트 켜기/끄기 (원본 재질 ↔ 복제해서 조정한 재질) |
-| Tab | 패널 숨기기/보이기 |
+| H | 패널 숨기기/보이기 |
 | F12 | 지금 화면 4K(3840x2160) 스크린샷 |
 | B | 같은 앵글로 Before(원본) / After(지금 분위기) 두 장 |
 

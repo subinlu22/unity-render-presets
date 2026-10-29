@@ -33,7 +33,36 @@ public class LookSwitcher : MonoBehaviour
     bool _hqByUser;                              // M 키로 직접 켰는지
     GameObject _rig;                             // 프리셋이 추가한 것들 (저장 안 됨)
 
-    void OnEnable() { LoadPresets(); }
+    [Tooltip("시작할 때 씌울 프리셋 (Look Panel에서 고르면 자동으로 저장됨). 비우면 원본")]
+    public LookPreset startPreset;
+
+    // 켜질 때(플레이 시작, 씬 열기, 스크립트 다시 불러오기) 마지막으로 고른 프리셋을 다시 씌움
+    // → 에디터에서 본 룩과 플레이 화면이 같아짐
+    // 모델 재질을 glb 원본으로 되돌림 (스크립트 다시 불러오기 등으로 "원래 재질 기억"이 사라졌을 때 대비)
+    // glb 파일 안의 같은 이름(Node-N) 렌더러 재질을 그대로 가져와 씀
+    public string modelAssetPath = "Assets/RenderTemplate/Models/cafesim_a100.glb";
+    public int ResetModelMaterials()
+    {
+        int n = 0;
+#if UNITY_EDITOR
+        if (Application.isPlaying || !model) return -1;
+        var src = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(modelAssetPath);
+        if (!src) return -2;
+        var orig = new Dictionary<string, Material[]>();
+        foreach (var r in src.GetComponentsInChildren<Renderer>(true)) orig[r.name] = r.sharedMaterials;
+        foreach (var r in model.GetComponentsInChildren<Renderer>(true))
+            if (orig.TryGetValue(r.name, out var m)) { r.sharedMaterials = m; n++; }
+        _swap.Forget();
+#endif
+        return n;
+    }
+
+    void OnEnable()
+    {
+        if (!HqOn) ResetModelMaterials();
+        LoadPresets();
+        if (startPreset && Index < 0) Select(presets.IndexOf(startPreset));
+    }
     void OnDisable() { Select(-1); SetHq(false); }
 
     // Resources/Looks 안의 프리셋을 order 순으로 읽음 → 파일만 넣으면 추가됨

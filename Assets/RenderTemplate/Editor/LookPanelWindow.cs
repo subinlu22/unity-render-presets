@@ -69,7 +69,15 @@ public class LookPanelWindow : EditorWindow
         EditorGUILayout.EndScrollView();
     }
 
-    static void Select(LookSwitcher sw, int i) { sw.Select(i); RepaintViews(); }
+    // 고른 프리셋을 씬에 기억 → 플레이·씬 다시 열기에도 같은 룩으로 시작
+    static void Select(LookSwitcher sw, int i)
+    {
+        sw.Select(i);
+        sw.startPreset = sw.Current;
+        EditorUtility.SetDirty(sw);
+        if (!Application.isPlaying) EditorSceneManager.MarkSceneDirty(sw.gameObject.scene);
+        RepaintViews();
+    }
     static void RepaintViews() { SceneView.RepaintAll(); UnityEditorInternal.InternalEditorUtility.RepaintAllViews(); }
 
     static bool Btn(string text, bool on)

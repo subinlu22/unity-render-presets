@@ -38,6 +38,8 @@ public class MaterialSwapper
         }
     }
 
+    public void Forget() => _orig.Clear();   // 모델을 다른 방법으로 원본으로 되돌렸을 때
+
     public void Restore()
     {
         foreach (var kv in _orig) if (kv.Key) kv.Key.sharedMaterials = kv.Value;
